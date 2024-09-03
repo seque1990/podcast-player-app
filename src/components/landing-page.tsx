@@ -1,5 +1,6 @@
 'use client';
 
+import React from 'react';
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Headphones, ChevronRight, Mic, Podcast, Play } from 'lucide-react'
@@ -126,12 +127,18 @@ export default function LandingPage() {
   )
 }
 
-function FeatureCard({ icon, title, description }) {
+interface FeatureCardProps {
+  icon: React.ReactNode;
+  title: string;
+  description: string;
+}
+
+function FeatureCard({ icon, title, description }: FeatureCardProps) {
   return (
     <div className="bg-gray-800 p-6 rounded-lg text-center">
       <div className="flex justify-center mb-4">{icon}</div>
       <h3 className="text-xl font-semibold mb-2">{title}</h3>
       <p className="text-gray-400">{description}</p>
     </div>
-  )
+  );
 }
