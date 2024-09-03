@@ -5,6 +5,15 @@ import { Play, Pause, SkipBack, SkipForward, Home, Search, Library, Volume2 } fr
 import { Button } from "@/components/ui/button"
 import { Slider } from "@/components/ui/slider"
 
+// Define the Podcast type if not imported from elsewhere
+type Podcast = {
+  id: number,
+  title: string,
+  host: string,
+  cover: string,
+  audio: string
+}
+
 const podcastData = [
   { id: 1, title: "Tech Talk", host: "Alice Smith", cover: "/placeholder.svg", audio: "/podcast_sample.mp3" },
   { id: 2, title: "True Crime Stories", host: "Bob Johnson", cover: "/placeholder.svg", audio: "/podcast_sample.mp3" },
@@ -17,7 +26,7 @@ const podcastData = [
 export default function PodcastPlayer() {
   const [isPlaying, setIsPlaying] = useState(false)
   const [progress, setProgress] = useState(0)
-  const [currentPodcast, setCurrentPodcast] = useState(podcastData[0])
+  const [currentPodcast, setCurrentPodcast] = useState<Podcast | null>(null)
   const [volume, setVolume] = useState(75)
   const audioRef = useRef<HTMLAudioElement>(null)
 
@@ -28,7 +37,7 @@ export default function PodcastPlayer() {
   }, [volume])
 
   const togglePlayPause = () => {
-    if (audioRef.current) {
+    if (audioRef.current && currentPodcast) {
       if (isPlaying) {
         audioRef.current.pause()
       } else {
@@ -38,7 +47,7 @@ export default function PodcastPlayer() {
     }
   }
 
-  const handlePodcastClick = (podcast) => {
+  const handlePodcastClick = (podcast: Podcast) => {
     setCurrentPodcast(podcast)
     setIsPlaying(true)
     if (audioRef.current) {
@@ -67,7 +76,7 @@ export default function PodcastPlayer() {
     <div className="flex flex-col h-screen bg-black text-white">
       <audio
         ref={audioRef}
-        src={currentPodcast.audio}
+        src={currentPodcast?.audio}
         onTimeUpdate={handleTimeUpdate}
         onEnded={() => setIsPlaying(false)}
       />
@@ -108,10 +117,10 @@ export default function PodcastPlayer() {
       <div className="bg-gray-900 border-t border-gray-800 p-4">
         <div className="flex items-center justify-between max-w-screen-xl mx-auto">
           <div className="flex items-center space-x-4">
-            <img src={currentPodcast.cover} alt="Current podcast" className="w-16 h-16 rounded" />
+            <img src={currentPodcast?.cover} alt="Current podcast" className="w-16 h-16 rounded" />
             <div>
-              <h3 className="font-semibold">{currentPodcast.title}</h3>
-              <p className="text-gray-400 text-sm">{currentPodcast.host}</p>
+              <h3 className="font-semibold">{currentPodcast?.title || 'No podcast selected'}</h3>
+              <p className="text-gray-400 text-sm">{currentPodcast?.host || 'Select a podcast to play'}</p>
             </div>
           </div>
           <div className="flex-1 max-w-md mx-4">
@@ -119,7 +128,13 @@ export default function PodcastPlayer() {
               <Button variant="ghost" size="icon" className="text-purple-300 hover:text-purple-100 hover:bg-purple-800">
                 <SkipBack className="h-5 w-5" />
               </Button>
-              <Button variant="ghost" size="icon" className="text-purple-300 hover:text-purple-100 hover:bg-purple-800" onClick={togglePlayPause}>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="text-purple-300 hover:text-purple-100 hover:bg-purple-800" 
+                onClick={togglePlayPause}
+                disabled={!currentPodcast}
+              >
                 {isPlaying ? <Pause className="h-8 w-8" /> : <Play className="h-8 w-8" />}
               </Button>
               <Button variant="ghost" size="icon" className="text-purple-300 hover:text-purple-100 hover:bg-purple-800">
