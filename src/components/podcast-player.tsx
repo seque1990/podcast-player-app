@@ -1,27 +1,76 @@
 'use client';
 
-import { useState } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import { Play, Pause, SkipBack, SkipForward, Home, Search, Library, Volume2 } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 import { Slider } from "@/components/ui/slider"
 
 const podcastData = [
-  { id: 1, title: "Tech Talk", host: "Alice Smith", cover: "/placeholder.svg" },
-  { id: 2, title: "True Crime Stories", host: "Bob Johnson", cover: "/placeholder.svg" },
-  { id: 3, title: "Comedy Hour", host: "Charlie Brown", cover: "/placeholder.svg" },
-  { id: 4, title: "Science Today", host: "Diana Prince", cover: "/placeholder.svg" },
-  { id: 5, title: "History Uncovered", host: "Edward Norton", cover: "/placeholder.svg" },
-  { id: 6, title: "Mindfulness Meditation", host: "Fiona Apple", cover: "/placeholder.svg" },
+  { id: 1, title: "Tech Talk", host: "Alice Smith", cover: "/placeholder.svg", audio: "/podcast_sample.mp3" },
+  { id: 2, title: "True Crime Stories", host: "Bob Johnson", cover: "/placeholder.svg", audio: "/podcast_sample.mp3" },
+  { id: 3, title: "Comedy Hour", host: "Charlie Brown", cover: "/placeholder.svg", audio: "/podcast_sample.mp3" },
+  { id: 4, title: "Science Today", host: "Diana Prince", cover: "/placeholder.svg", audio: "/podcast_sample.mp3" },
+  { id: 5, title: "History Uncovered", host: "Edward Norton", cover: "/placeholder.svg", audio: "/podcast_sample.mp3" },
+  { id: 6, title: "Mindfulness Meditation", host: "Fiona Apple", cover: "/placeholder.svg", audio: "/podcast_sample.mp3" },
 ]
 
 export default function PodcastPlayer() {
   const [isPlaying, setIsPlaying] = useState(false)
   const [progress, setProgress] = useState(0)
+  const [currentPodcast, setCurrentPodcast] = useState(podcastData[0])
+  const [volume, setVolume] = useState(75)
+  const audioRef = useRef<HTMLAudioElement>(null)
 
-  const togglePlayPause = () => setIsPlaying(!isPlaying)
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.volume = volume / 100
+    }
+  }, [volume])
+
+  const togglePlayPause = () => {
+    if (audioRef.current) {
+      if (isPlaying) {
+        audioRef.current.pause()
+      } else {
+        audioRef.current.play()
+      }
+      setIsPlaying(!isPlaying)
+    }
+  }
+
+  const handlePodcastClick = (podcast) => {
+    setCurrentPodcast(podcast)
+    setIsPlaying(true)
+    if (audioRef.current) {
+      audioRef.current.src = podcast.audio
+      audioRef.current.play()
+    }
+  }
+
+  const handleTimeUpdate = () => {
+    if (audioRef.current) {
+      const progress = (audioRef.current.currentTime / audioRef.current.duration) * 100
+      setProgress(progress)
+    }
+  }
+
+  const handleProgressChange = (value: number[]) => {
+    const newProgress = value[0]
+    setProgress(newProgress)
+    if (audioRef.current) {
+      const newTime = (newProgress / 100) * audioRef.current.duration
+      audioRef.current.currentTime = newTime
+    }
+  }
 
   return (
     <div className="flex flex-col h-screen bg-black text-white">
+      <audio
+        ref={audioRef}
+        src={currentPodcast.audio}
+        onTimeUpdate={handleTimeUpdate}
+        onEnded={() => setIsPlaying(false)}
+      />
       <div className="flex flex-1 overflow-hidden">
         {/* Sidebar */}
         <nav className="w-64 bg-gray-900 p-5 hidden md:block">
@@ -43,7 +92,7 @@ export default function PodcastPlayer() {
           <h1 className="text-3xl font-bold mb-6">Popular Podcasts</h1>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {podcastData.map((podcast) => (
-              <div key={podcast.id} className="bg-gray-800 rounded-lg overflow-hidden hover:bg-gray-700 transition-colors">
+              <div key={podcast.id} className="bg-gray-800 rounded-lg overflow-hidden hover:bg-gray-700 transition-colors cursor-pointer" onClick={() => handlePodcastClick(podcast)}>
                 <img src={podcast.cover} alt={podcast.title} className="w-full aspect-square object-cover" />
                 <div className="p-4">
                   <h3 className="font-semibold text-lg mb-1">{podcast.title}</h3>
@@ -59,10 +108,10 @@ export default function PodcastPlayer() {
       <div className="bg-gray-900 border-t border-gray-800 p-4">
         <div className="flex items-center justify-between max-w-screen-xl mx-auto">
           <div className="flex items-center space-x-4">
-            <img src="/placeholder.svg" alt="Current podcast" className="w-16 h-16 rounded" />
+            <img src={currentPodcast.cover} alt="Current podcast" className="w-16 h-16 rounded" />
             <div>
-              <h3 className="font-semibold">Current Podcast Episode</h3>
-              <p className="text-gray-400 text-sm">Host Name</p>
+              <h3 className="font-semibold">{currentPodcast.title}</h3>
+              <p className="text-gray-400 text-sm">{currentPodcast.host}</p>
             </div>
           </div>
           <div className="flex-1 max-w-md mx-4">
@@ -82,16 +131,17 @@ export default function PodcastPlayer() {
               max={100}
               step={1}
               className="w-full"
-              onValueChange={(value) => setProgress(value[0])}
+              onValueChange={handleProgressChange}
             />
           </div>
           <div className="hidden md:flex items-center space-x-2">
             <Volume2 className="h-5 w-5 text-purple-300" />
             <Slider
-              value={[75]}
+              value={[volume]}
               max={100}
               step={1}
               className="w-20"
+              onValueChange={(value) => setVolume(value[0])}
             />
           </div>
         </div>
