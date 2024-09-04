@@ -134,7 +134,18 @@ export default function PodcastShowDetails({ show }: { show: PodcastShow }) {
   }
 
   return (
-    <PodcastLayout>
+    <PodcastLayout
+    currentEpisode={currentEpisode}
+    isPlaying={isPlaying}
+    togglePlayPause={togglePlayPause}
+    progress={progress}
+    handleProgressChange={handleProgressChange}
+    volume={volume}
+    setVolume={setVolume}
+    formatTime={formatTime}
+    currentTime={currentTime}
+    duration={duration}
+    >
       <div className="min-h-screen bg-gradient-to-br from-black via-purple-900 to-black text-white">
         <audio
           ref={audioRef}
@@ -237,53 +248,6 @@ export default function PodcastShowDetails({ show }: { show: PodcastShow }) {
             </div>
           </div>
         </section>
-
-        {/* Bottom player */}
-        <div className="fixed bottom-0 left-0 right-0 bg-gray-900 border-t border-gray-800 p-4">
-          <div className="flex items-center justify-between max-w-screen-xl mx-auto">
-            <div className="flex items-center space-x-4">
-              <img src={currentEpisode?.image || show.cover} alt="Current podcast" className="w-16 h-16 rounded" />
-              <div>
-                <h3 className="font-semibold">{currentEpisode?.title || 'No episode selected'}</h3>
-                <p className="text-gray-400 text-sm">{show.host}</p>
-              </div>
-            </div>
-            <div className="flex-1 max-w-md mx-4">
-              <div className="flex justify-center items-center space-x-4 mb-2">
-                <Button variant="ghost" size="icon" className="text-purple-300 hover:text-purple-100 hover:bg-purple-800">
-                  <SkipBack className="h-5 w-5" />
-                </Button>
-                <Button variant="ghost" size="icon" className="text-purple-300 hover:text-purple-100 hover:bg-purple-800" onClick={togglePlayPause}>
-                  {isPlaying ? <Pause className="h-8 w-8" /> : <Play className="h-8 w-8" />}
-                </Button>
-                <Button variant="ghost" size="icon" className="text-purple-300 hover:text-purple-100 hover:bg-purple-800">
-                  <SkipForward className="h-5 w-5" />
-                </Button>
-              </div>
-              <div className="flex items-center">
-                <span className="text-sm w-16 text-right">{formatTime(currentTime)}</span>
-                <Slider
-                  value={[progress]}
-                  max={100}
-                  step={1}
-                  className="w-full mx-4"
-                  onValueChange={handleProgressChange}
-                />
-                <span className="text-sm w-16">{formatTime(duration)}</span>
-              </div>
-            </div>
-            <div className="hidden md:flex items-center space-x-2">
-              <Volume2 className="h-5 w-5 text-purple-300" />
-              <Slider
-                value={[volume]}
-                max={100}
-                step={1}
-                className="w-20"
-                onValueChange={(value) => setVolume(value[0])}
-              />
-            </div>
-          </div>
-        </div>
       </div>
     </PodcastLayout>
   )
