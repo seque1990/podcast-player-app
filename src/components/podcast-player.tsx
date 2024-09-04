@@ -5,7 +5,8 @@ import { Play, Pause, SkipBack, SkipForward, Home, Search, Library, Volume2 } fr
 import { Button } from "@/components/ui/button"
 import { Slider } from "@/components/ui/slider"
 import debounce from 'lodash/debounce'
-import Parser from 'rss-parser'
+import Parser from 'rss-parser';
+
 
 type CustomItem = {
   title: string;
@@ -30,7 +31,10 @@ type Podcast = {
 
 const parser: Parser<CustomFeed, CustomItem> = new Parser({
   customFields: {
-    item: ['itunes:image', ['itunes:duration', 'duration']]
+    item: [
+      ['itunes:image', 'itunes.image'],
+      ['itunes:duration', 'itunes.duration']
+    ]
   }
 });
 
