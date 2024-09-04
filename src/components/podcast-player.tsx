@@ -10,13 +10,18 @@ import Parser from 'rss-parser';
 
 type CustomItem = {
   title: string;
-  enclosure: { url: string };
-  itunes: { image: string; duration: string };
+  contentSnippet?: string;
+  enclosure?: { url: string };
+  itunes: { 
+    image?: string; 
+    duration?: string 
+  };
 }
 
 type CustomFeed = {
   title: string;
   description: string;
+  image?: { url: string };
   items: CustomItem[];
 }
 
@@ -33,7 +38,11 @@ const parser: Parser<CustomFeed, CustomItem> = new Parser({
   customFields: {
     item: [
       ['itunes:image', 'itunes.image'],
-      ['itunes:duration', 'itunes.duration']
+      ['itunes:duration', 'itunes.duration'],
+      'contentSnippet'
+    ],
+    feed: [
+      ['image', 'image.url']
     ]
   }
 });
