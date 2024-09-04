@@ -147,10 +147,16 @@ const [duration, setDuration] = useState(0)
     }
   }
 
-  const formatTime = (time: number) => {
-    const minutes = Math.floor(time / 60)
-    const seconds = Math.floor(time % 60)
-    return `${minutes}:${seconds.toString().padStart(2, '0')}`
+  const formatTime = (timeInSeconds: number) => {
+    const hours = Math.floor(timeInSeconds / 3600);
+    const minutes = Math.floor((timeInSeconds % 3600) / 60);
+    const seconds = Math.floor(timeInSeconds % 60);
+  
+    if (hours > 0) {
+      return `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    } else {
+      return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+    }
   }
 
   const handleProgressChange = (value: number[]) => {
@@ -242,7 +248,7 @@ const [duration, setDuration] = useState(0)
               </Button>
             </div>
             <div className="flex items-center">
-              <span className="text-sm w-10 text-right">{formatTime(currentTime)}</span>
+              <span className="text-sm w-16 text-right">{formatTime(currentTime)}</span>
               <Slider
                 value={[progress]}
                 max={100}
@@ -250,7 +256,7 @@ const [duration, setDuration] = useState(0)
                 className="w-full mx-4"
                 onValueChange={handleProgressChange}
               />
-              <span className="text-sm w-10">{formatTime(duration)}</span>
+              <span className="text-sm w-16">{formatTime(duration)}</span>
             </div>
           </div>
           
