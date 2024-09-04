@@ -135,16 +135,19 @@ export default function PodcastShowDetails({ show }: { show: PodcastShow }) {
 
   return (
     <PodcastLayout
-    currentEpisode={currentEpisode}
-    isPlaying={isPlaying}
-    togglePlayPause={togglePlayPause}
-    progress={progress}
-    handleProgressChange={handleProgressChange}
-    volume={volume}
-    setVolume={setVolume}
-    formatTime={formatTime}
-    currentTime={currentTime}
-    duration={duration}
+      currentEpisode={currentEpisode ? {
+        title: currentEpisode.title,
+        show: show.title,
+        image: currentEpisode.image
+      } : null}
+      isPlaying={isPlaying}
+      togglePlayPause={togglePlayPause}
+      progress={progress}
+      handleProgressChange={handleProgressChange}
+      volume={volume}
+      setVolume={setVolume}
+      currentTime={currentTime}
+      duration={duration}
     >
       <div className="min-h-screen bg-gradient-to-br from-black via-purple-900 to-black text-white">
         <audio

@@ -9,21 +9,34 @@ import { usePathname } from 'next/navigation';
 
 type LayoutProps = {
   children: React.ReactNode;
+  currentEpisode: {
+    title: string;
+    show: string;
+    image: string;
+  } | null;
+  isPlaying: boolean;
+  togglePlayPause: () => void;
+  progress: number;
+  handleProgressChange: (value: number[]) => void;
+  volume: number;
+  setVolume: (value: number) => void;
+  currentTime: number;
+  duration: number | null;
 };
 
-export default function PodcastLayout({ children }: LayoutProps) {
+export default function PodcastLayout({
+  children,
+  currentEpisode,
+  isPlaying,
+  togglePlayPause,
+  progress,
+  handleProgressChange,
+  volume,
+  setVolume,
+  currentTime,
+  duration
+}: LayoutProps) {
   const pathname = usePathname();
-
-  // Placeholder functions and state
-  const isPlaying = false;
-  const togglePlayPause = () => {};
-  const currentEpisode = null;
-  const progress = 0;
-  const handleProgressChange = () => {};
-  const volume = 75;
-  const setVolume = () => {};
-  const currentTime = 0;
-  const duration = 0;
 
   const formatTime = (time: number): string => {
     const minutes = Math.floor(time / 60);
@@ -61,10 +74,10 @@ export default function PodcastLayout({ children }: LayoutProps) {
       <div className="bg-gray-900 border-t border-gray-800 p-4">
         <div className="flex items-center justify-between max-w-screen-xl mx-auto">
           <div className="flex items-center space-x-4">
-            <img src="/placeholder.svg" alt="Current podcast" className="w-16 h-16 rounded" />
+            <img src={currentEpisode?.image || "/placeholder.svg"} alt="Current podcast" className="w-16 h-16 rounded" />
             <div>
-              <h3 className="font-semibold">No episode selected</h3>
-              <p className="text-gray-400 text-sm">Podcast Host</p>
+              <h3 className="font-semibold">{currentEpisode?.title || "No episode selected"}</h3>
+              <p className="text-gray-400 text-sm">{currentEpisode?.show || "Podcast Host"}</p>
             </div>
           </div>
           <div className="flex-1 max-w-md mx-4">
@@ -88,7 +101,7 @@ export default function PodcastLayout({ children }: LayoutProps) {
                 className="w-full mx-4"
                 onValueChange={handleProgressChange}
               />
-              <span className="text-sm w-16">{formatTime(duration)}</span>
+              <span className="text-sm w-16">{formatTime(duration || 0)}</span>
             </div>
           </div>
           <div className="hidden md:flex items-center space-x-2">

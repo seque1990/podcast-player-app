@@ -56,7 +56,17 @@ export default function PodcastShowsList() {
   };
 
   return (
-    <PodcastLayout>
+    <PodcastLayout
+      currentEpisode={null}
+      isPlaying={false}
+      togglePlayPause={() => {}}
+      progress={0}
+      handleProgressChange={() => {}}
+      volume={75}
+      setVolume={() => {}}
+      currentTime={0}
+      duration={null}
+    >
       <div className="p-8">
         <h1 className="text-3xl font-bold mb-6">Popular Podcasts</h1>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
