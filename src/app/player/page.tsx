@@ -1,5 +1,5 @@
-import PodcastPlayer from '@/components/podcast-player'
+import PodcastShowsList from '@/components/podcast-shows-list'
 
-export default function PlayerPage() {
-  return <PodcastPlayer />
+export default function Home() {
+  return <PodcastShowsList />
 }
