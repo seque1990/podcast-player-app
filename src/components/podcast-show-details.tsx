@@ -43,8 +43,9 @@ export default function PodcastShowDetails({ show }: { show: PodcastShow }) {
   const audioRef = useRef<HTMLAudioElement>(null)
 
   useEffect(() => {
+    console.log('Show cover:', show.cover);
     fetchEpisodes();
-  }, [show.rssUrl]);
+  }, [show.rssUrl, show.cover]);
 
   const fetchEpisodes = async () => {
     try {
@@ -56,13 +57,24 @@ export default function PodcastShowDetails({ show }: { show: PodcastShow }) {
         date: item.pubDate || '',
         description: item.contentSnippet || '',
         audioUrl: item.enclosure?.url || '',
-        image: item.itunes?.image || show.cover,
+        image: item.itunes?.image || feed.image?.url || show.cover,
       }));
       setEpisodes(parsedEpisodes);
+      
+      // Update show information
+      if (feed.image?.url) {
+        show.cover = feed.image.url;
+      } else if (feed.itunes?.image) {
+        show.cover = feed.itunes.image;
+      }
+      
       // Update show summary if available in the feed
       if (feed.description) {
         show.summary = feed.description;
       }
+      
+      // Force a re-render
+      setShow({...show});
     } catch (error) {
       console.error('Error fetching episodes:', error);
     }
@@ -159,7 +171,7 @@ export default function PodcastShowDetails({ show }: { show: PodcastShow }) {
         <header className="bg-black bg-opacity-50 backdrop-blur-lg py-6 sticky top-0 z-10">
           <div className="container mx-auto px-4 flex justify-between items-center">
             <div className="flex items-center space-x-4">
-              <img src={show.cover} alt={show.title} className="w-16 h-16 rounded-lg" />
+              <img src={show.cover || '/placeholder.svg'} alt={show.title} className="w-16 h-16 rounded-lg" />
               <h1 className="text-3xl font-bold">{show.title}</h1>
             </div>
             <Button 
@@ -176,7 +188,7 @@ export default function PodcastShowDetails({ show }: { show: PodcastShow }) {
           <div className="container mx-auto px-4">
             <div className="flex flex-col md:flex-row gap-8 items-center md:items-start">
               <img 
-                src={show.cover} 
+                src={show.cover || '/placeholder.svg'} 
                 alt={show.title} 
                 className="w-64 h-64 object-cover rounded-lg shadow-lg transform hover:scale-105 transition-transform duration-300"
               />
