@@ -45,6 +45,8 @@ export default function PodcastPlayer() {
   const [volume, setVolume] = useState(75)
   const [podcasts, setPodcasts] = useState<Podcast[]>([])
   const audioRef = useRef<HTMLAudioElement>(null)
+  const [currentTime, setCurrentTime] = useState(0)
+const [duration, setDuration] = useState(0)
 
   useEffect(() => {
     fetchPodcasts()
@@ -138,9 +140,17 @@ export default function PodcastPlayer() {
 
   const handleTimeUpdate = () => {
     if (audioRef.current) {
+      setCurrentTime(audioRef.current.currentTime)
+      setDuration(audioRef.current.duration)
       const progress = (audioRef.current.currentTime / audioRef.current.duration) * 100
       setProgress(progress)
     }
+  }
+
+  const formatTime = (time: number) => {
+    const minutes = Math.floor(time / 60)
+    const seconds = Math.floor(time % 60)
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`
   }
 
   const handleProgressChange = (value: number[]) => {
@@ -197,14 +207,17 @@ export default function PodcastPlayer() {
       {/* Bottom player */}
       <div className="bg-gray-900 border-t border-gray-800 p-4">
         <div className="flex items-center justify-between max-w-screen-xl mx-auto">
-          <div className="flex items-center space-x-4">
-            <img src={currentPodcast?.cover} alt="Current podcast" className="w-16 h-16 rounded" />
-            <div>
-              <h3 className="font-semibold">{currentPodcast?.title || 'No podcast selected'}</h3>
-              <p className="text-gray-400 text-sm">{currentPodcast?.duration || 'Select a podcast to play'}</p>
+          {/* Podcast info */}
+          <div className="flex items-center space-x-4 w-1/4">
+            <img src={currentPodcast?.cover} alt="Current podcast" className="w-16 h-16 rounded flex-shrink-0" />
+            <div className="overflow-hidden">
+              <h3 className="font-semibold truncate w-48">{currentPodcast?.title || 'No podcast selected'}</h3>
+              <p className="text-gray-400 text-sm truncate w-48">{currentPodcast?.duration || 'Select a podcast to play'}</p>
             </div>
           </div>
-          <div className="flex-1 max-w-md mx-4">
+          
+          {/* Player controls and progress */}
+          <div className="flex-1 max-w-2xl mx-4">
             <div className="flex justify-center items-center space-x-4 mb-2">
               <Button variant="ghost" size="icon" className="text-purple-300 hover:text-purple-100 hover:bg-purple-800">
                 <SkipBack className="h-5 w-5" />
@@ -228,21 +241,27 @@ export default function PodcastPlayer() {
                 <SkipForward className="h-5 w-5" />
               </Button>
             </div>
-            <Slider
-              value={[progress]}
-              max={100}
-              step={1}
-              className="w-full"
-              onValueChange={handleProgressChange}
-            />
+            <div className="flex items-center">
+              <span className="text-sm w-10 text-right">{formatTime(currentTime)}</span>
+              <Slider
+                value={[progress]}
+                max={100}
+                step={1}
+                className="w-full mx-4"
+                onValueChange={handleProgressChange}
+              />
+              <span className="text-sm w-10">{formatTime(duration)}</span>
+            </div>
           </div>
-          <div className="hidden md:flex items-center space-x-2">
+          
+          {/* Volume control */}
+          <div className="flex items-center space-x-2 w-1/4 justify-end">
             <Volume2 className="h-5 w-5 text-purple-300" />
             <Slider
               value={[volume]}
               max={100}
               step={1}
-              className="w-20"
+              className="w-24"
               onValueChange={(value) => setVolume(value[0])}
             />
           </div>
