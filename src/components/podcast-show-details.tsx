@@ -41,15 +41,16 @@ export default function PodcastShowDetails({ show }: { show: PodcastShow }) {
   const [duration, setDuration] = useState<number | null>(null)
   const [isSubscribed, setIsSubscribed] = useState(false)
   const audioRef = useRef<HTMLAudioElement>(null)
+  const [showInfo, setShowInfo] = useState<PodcastShow>(show);
 
   useEffect(() => {
-    console.log('Show cover:', show.cover);
+    console.log('Show cover:', showInfo.cover);
     fetchEpisodes();
-  }, [show.rssUrl, show.cover]);
+  }, [showInfo.rssUrl]);
 
   const fetchEpisodes = async () => {
     try {
-      const feed = await parser.parseURL(show.rssUrl);
+      const feed = await parser.parseURL(showInfo.rssUrl);
       const parsedEpisodes: PodcastEpisode[] = feed.items.map((item, index) => ({
         id: item.guid || `${index}`,
         title: item.title || '',
@@ -57,24 +58,24 @@ export default function PodcastShowDetails({ show }: { show: PodcastShow }) {
         date: item.pubDate || '',
         description: item.contentSnippet || '',
         audioUrl: item.enclosure?.url || '',
-        image: item.itunes?.image || feed.image?.url || show.cover,
+        image: item.itunes?.image || feed.image?.url || showInfo.cover,
       }));
       setEpisodes(parsedEpisodes);
       
       // Update show information
+      const updatedShow = { ...showInfo };
       if (feed.image?.url) {
-        show.cover = feed.image.url;
+        updatedShow.cover = feed.image.url;
       } else if (feed.itunes?.image) {
-        show.cover = feed.itunes.image;
+        updatedShow.cover = feed.itunes.image;
       }
       
       // Update show summary if available in the feed
       if (feed.description) {
-        show.summary = feed.description;
+        updatedShow.summary = feed.description;
       }
       
-      // Force a re-render
-      setShow({...show});
+      setShowInfo(updatedShow);
     } catch (error) {
       console.error('Error fetching episodes:', error);
     }
@@ -149,7 +150,7 @@ export default function PodcastShowDetails({ show }: { show: PodcastShow }) {
     <PodcastLayout
       currentEpisode={currentEpisode ? {
         title: currentEpisode.title,
-        show: show.title,
+        show: showInfo.title,
         image: currentEpisode.image
       } : null}
       isPlaying={isPlaying}
@@ -171,8 +172,8 @@ export default function PodcastShowDetails({ show }: { show: PodcastShow }) {
         <header className="bg-black bg-opacity-50 backdrop-blur-lg py-6 sticky top-0 z-10">
           <div className="container mx-auto px-4 flex justify-between items-center">
             <div className="flex items-center space-x-4">
-              <img src={show.cover || '/placeholder.svg'} alt={show.title} className="w-16 h-16 rounded-lg" />
-              <h1 className="text-3xl font-bold">{show.title}</h1>
+              <img src={showInfo.cover || '/placeholder.svg'} alt={showInfo.title} className="w-16 h-16 rounded-lg" />
+              <h1 className="text-3xl font-bold">{showInfo.title}</h1>
             </div>
             <Button 
               className={`${isSubscribed ? 'bg-purple-700' : 'bg-purple-600'} hover:bg-purple-700 text-white`}
@@ -188,16 +189,16 @@ export default function PodcastShowDetails({ show }: { show: PodcastShow }) {
           <div className="container mx-auto px-4">
             <div className="flex flex-col md:flex-row gap-8 items-center md:items-start">
               <img 
-                src={show.cover || '/placeholder.svg'} 
-                alt={show.title} 
+                src={showInfo.cover || '/placeholder.svg'} 
+                alt={showInfo.title} 
                 className="w-64 h-64 object-cover rounded-lg shadow-lg transform hover:scale-105 transition-transform duration-300"
               />
               <div className="flex-1">
                 <h2 className="text-2xl font-semibold mb-4">About the Show</h2>
-                <p className="text-gray-300 mb-4">{show.summary}</p>
+                <p className="text-gray-300 mb-4">{showInfo.summary}</p>
                 <div className="flex items-center space-x-4 mb-4">
                   <span className="bg-purple-800 text-purple-200 px-3 py-1 rounded-full text-sm">
-                    {show.category}
+                    {showInfo.category}
                   </span>
                   <span className="flex items-center text-gray-300">
                     <Headphones className="h-5 w-5 mr-2" />
