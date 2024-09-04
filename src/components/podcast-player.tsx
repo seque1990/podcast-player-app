@@ -62,7 +62,8 @@ export default function PodcastPlayer() {
   const [podcasts, setPodcasts] = useState<Podcast[]>([])
   const audioRef = useRef<HTMLAudioElement>(null)
   const [currentTime, setCurrentTime] = useState(0)
-const [duration, setDuration] = useState(0)
+  const [duration, setDuration] = useState<number | null>(null);
+
 
   useEffect(() => {
     fetchPodcasts()
@@ -156,14 +157,24 @@ const [duration, setDuration] = useState(0)
 
   const handleTimeUpdate = () => {
     if (audioRef.current) {
-      setCurrentTime(audioRef.current.currentTime)
-      setDuration(audioRef.current.duration)
-      const progress = (audioRef.current.currentTime / audioRef.current.duration) * 100
-      setProgress(progress)
+      const currentTime = audioRef.current.currentTime;
+      const duration = audioRef.current.duration;
+      
+      setCurrentTime(currentTime);
+      
+      if (!isNaN(duration)) {
+        setDuration(duration);
+        const progress = (currentTime / duration) * 100;
+        setProgress(progress);
+      }
     }
   }
 
-  const formatTime = (timeInSeconds: number) => {
+  const formatTime = (timeInSeconds: number | null): string => {
+    if (timeInSeconds === null || isNaN(timeInSeconds)) {
+      return "--:--";
+    }
+    
     const hours = Math.floor(timeInSeconds / 3600);
     const minutes = Math.floor((timeInSeconds % 3600) / 60);
     const seconds = Math.floor(timeInSeconds % 60);
@@ -272,7 +283,7 @@ const [duration, setDuration] = useState(0)
                 className="w-full mx-4"
                 onValueChange={handleProgressChange}
               />
-              <span className="text-sm w-16">{formatTime(duration)}</span>
+              <span className="text-sm w-16">{formatTime(duration || null)}</span>
             </div>
           </div>
           
