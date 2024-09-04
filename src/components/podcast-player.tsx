@@ -33,19 +33,22 @@ type Podcast = {
   audio: string;
   duration: string;
 }
-
-const parser: Parser<CustomFeed, CustomItem> = new Parser({
-  customFields: {
-    item: [
-      ['itunes:image', 'itunes.image'],
-      ['itunes:duration', 'itunes.duration'],
-      'contentSnippet'
-    ],
-    feed: {
-      image: 'image.url'
-    }
+class CustomParser extends Parser<CustomFeed, CustomItem> {
+  constructor() {
+    super({
+      customFields: {
+        item: [
+          ['itunes:image', 'itunes.image'],
+          ['itunes:duration', 'itunes.duration'],
+          'contentSnippet'
+        ],
+        feed: ['image']
+      }
+    });
   }
-});
+}
+
+const parser = new CustomParser();
 
 const RSS_FEED_URL = 'https://allinchamathjason.libsyn.com/rss';
 
@@ -93,7 +96,7 @@ const [duration, setDuration] = useState(0)
         id: index,
         title: item.title || '',
         description: item.contentSnippet || '',
-        cover: item.itunes?.image || feed.image?.url || '',
+        cover: item.itunes?.image || (feed.image as { url: string })?.url || '',
         audio: item.enclosure?.url || '',
         duration: item.itunes?.duration || ''
       }))
