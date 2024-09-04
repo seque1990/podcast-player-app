@@ -39,9 +39,15 @@ export default function PodcastLayout({
   const pathname = usePathname();
 
   const formatTime = (time: number): string => {
-    const minutes = Math.floor(time / 60);
+    const hours = Math.floor(time / 3600);
+    const minutes = Math.floor((time % 3600) / 60);
     const seconds = Math.floor(time % 60);
-    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+    
+    if (hours > 0) {
+      return `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    } else {
+      return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+    }
   };
 
   return (
@@ -69,18 +75,17 @@ export default function PodcastLayout({
           {children}
         </main>
       </div>
-
-      {/* Bottom player */}
-      <div className="bg-gray-900 border-t border-gray-800 p-4">
+{/* Bottom player */}
+<div className="bg-gray-900 border-t border-gray-800 p-4">
         <div className="flex items-center justify-between max-w-screen-xl mx-auto">
-          <div className="flex items-center space-x-4">
-            <img src={currentEpisode?.image || "/placeholder.svg"} alt="Current podcast" className="w-16 h-16 rounded" />
-            <div>
-              <h3 className="font-semibold">{currentEpisode?.title || "No episode selected"}</h3>
-              <p className="text-gray-400 text-sm">{currentEpisode?.show || "Podcast Host"}</p>
+          <div className="flex items-center space-x-4 w-1/4">
+            <img src={currentEpisode?.image || "/placeholder.svg"} alt="Current podcast" className="w-16 h-16 rounded flex-shrink-0" />
+            <div className="overflow-hidden">
+              <h3 className="font-semibold truncate w-48">{currentEpisode?.title || "No episode selected"}</h3>
+              <p className="text-gray-400 text-sm truncate w-48">{currentEpisode?.show || "Podcast Host"}</p>
             </div>
           </div>
-          <div className="flex-1 max-w-md mx-4">
+          <div className="flex-1 max-w-2xl mx-4">
             <div className="flex justify-center items-center space-x-4 mb-2">
               <Button variant="ghost" size="icon" className="text-purple-300 hover:text-purple-100 hover:bg-purple-800">
                 <SkipBack className="h-5 w-5" />
@@ -104,13 +109,13 @@ export default function PodcastLayout({
               <span className="text-sm w-16">{formatTime(duration || 0)}</span>
             </div>
           </div>
-          <div className="hidden md:flex items-center space-x-2">
+          <div className="hidden md:flex items-center space-x-2 w-1/4 justify-end">
             <Volume2 className="h-5 w-5 text-purple-300" />
             <Slider
               value={[volume]}
               max={100}
               step={1}
-              className="w-20"
+              className="w-24"
               onValueChange={(value) => setVolume(value[0])}
             />
           </div>
