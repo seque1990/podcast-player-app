@@ -1,34 +1,54 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react'
+import React, { useState, useRef, useEffect, useCallback } from 'react'
 import { Play, Pause, SkipBack, SkipForward, Home, Search, Library, Volume2 } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 import { Slider } from "@/components/ui/slider"
+import debounce from 'lodash/debounce'
+import Parser from 'rss-parser'
 
-// Define the Podcast type if not imported from elsewhere
-type Podcast = {
-  id: number,
-  title: string,
-  host: string,
-  cover: string,
-  audio: string
+type CustomItem = {
+  title: string;
+  enclosure: { url: string };
+  itunes: { image: string; duration: string };
 }
 
-const podcastData = [
-  { id: 1, title: "Tech Talk", host: "Alice Smith", cover: "/placeholder.svg", audio: "/podcast_sample.mp3" },
-  { id: 2, title: "True Crime Stories", host: "Bob Johnson", cover: "/placeholder.svg", audio: "/podcast_sample.mp3" },
-  { id: 3, title: "Comedy Hour", host: "Charlie Brown", cover: "/placeholder.svg", audio: "/podcast_sample.mp3" },
-  { id: 4, title: "Science Today", host: "Diana Prince", cover: "/placeholder.svg", audio: "/podcast_sample.mp3" },
-  { id: 5, title: "History Uncovered", host: "Edward Norton", cover: "/placeholder.svg", audio: "/podcast_sample.mp3" },
-  { id: 6, title: "Mindfulness Meditation", host: "Fiona Apple", cover: "/placeholder.svg", audio: "/podcast_sample.mp3" },
-]
+type CustomFeed = {
+  title: string;
+  description: string;
+  items: CustomItem[];
+}
+
+type Podcast = {
+  id: number;
+  title: string;
+  description: string;
+  cover: string;
+  audio: string;
+  duration: string;
+}
+
+const parser: Parser<CustomFeed, CustomItem> = new Parser({
+  customFields: {
+    item: ['itunes:image', ['itunes:duration', 'duration']]
+  }
+});
+
+const RSS_FEED_URL = 'https://allinchamathjason.libsyn.com/rss';
 
 export default function PodcastPlayer() {
   const [isPlaying, setIsPlaying] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const [progress, setProgress] = useState(0)
   const [currentPodcast, setCurrentPodcast] = useState<Podcast | null>(null)
   const [volume, setVolume] = useState(75)
+  const [podcasts, setPodcasts] = useState<Podcast[]>([])
   const audioRef = useRef<HTMLAudioElement>(null)
+
+  useEffect(() => {
+    fetchPodcasts()
+  }, [])
 
   useEffect(() => {
     if (audioRef.current) {
@@ -36,23 +56,83 @@ export default function PodcastPlayer() {
     }
   }, [volume])
 
-  const togglePlayPause = () => {
-    if (audioRef.current && currentPodcast) {
-      if (isPlaying) {
+  useEffect(() => {
+    return () => {
+      if (audioRef.current) {
         audioRef.current.pause()
-      } else {
-        audioRef.current.play()
       }
-      setIsPlaying(!isPlaying)
+    }
+  }, [])
+
+  const debouncedHandlePodcastClick = useCallback(
+    debounce((podcast: Podcast) => {
+      handlePodcastClick(podcast)
+    }, 300),
+    []
+  )
+
+  const fetchPodcasts = async () => {
+    try {
+      const feed = await parser.parseURL(RSS_FEED_URL)
+      const parsedPodcasts: Podcast[] = feed.items.map((item, index) => ({
+        id: index,
+        title: item.title || '',
+        description: item.contentSnippet || '',
+        cover: item.itunes?.image || feed.image?.url || '',
+        audio: item.enclosure?.url || '',
+        duration: item.itunes?.duration || ''
+      }))
+      setPodcasts(parsedPodcasts)
+    } catch (error) {
+      console.error('Error fetching podcasts:', error)
+      setError('Failed to fetch podcasts. Please try again later.')
     }
   }
 
-  const handlePodcastClick = (podcast: Podcast) => {
+  const togglePlayPause = async () => {
+    if (audioRef.current && currentPodcast) {
+      try {
+        if (isPlaying) {
+          await audioRef.current.pause()
+        } else {
+          await audioRef.current.play()
+        }
+        setIsPlaying(!isPlaying)
+      } catch (error) {
+        console.error('Error toggling play/pause:', error)
+        setError('Failed to play/pause audio. Please try again.')
+      }
+    }
+  }
+
+  const handlePodcastClick = async (podcast: Podcast) => {
     setCurrentPodcast(podcast)
-    setIsPlaying(true)
+    setIsPlaying(false)
+    setIsLoading(true)
+    setError(null)
+  
     if (audioRef.current) {
-      audioRef.current.src = podcast.audio
-      audioRef.current.play()
+      try {
+        audioRef.current.pause()
+        audioRef.current.currentTime = 0
+        audioRef.current.src = podcast.audio
+  
+        await new Promise((resolve, reject) => {
+          if (audioRef.current) {
+            audioRef.current.oncanplay = resolve
+            audioRef.current.onerror = reject
+          }
+        })
+  
+        await audioRef.current.play()
+  
+        setIsPlaying(true)
+        setIsLoading(false)
+      } catch (error) {
+        console.error('Error playing audio:', error)
+        setError('Failed to play audio. Please try again.')
+        setIsLoading(false)
+      }
     }
   }
 
@@ -99,13 +179,14 @@ export default function PodcastPlayer() {
         {/* Main content */}
         <main className="flex-1 overflow-y-auto p-8">
           <h1 className="text-3xl font-bold mb-6">Popular Podcasts</h1>
+          {error && <p className="text-red-500 mb-4">{error}</p>}
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {podcastData.map((podcast) => (
-              <div key={podcast.id} className="bg-gray-800 rounded-lg overflow-hidden hover:bg-gray-700 transition-colors cursor-pointer" onClick={() => handlePodcastClick(podcast)}>
+            {podcasts.map((podcast) => (
+              <div key={podcast.id} className="bg-gray-800 rounded-lg overflow-hidden hover:bg-gray-700 transition-colors cursor-pointer" onClick={() => debouncedHandlePodcastClick(podcast)}>
                 <img src={podcast.cover} alt={podcast.title} className="w-full aspect-square object-cover" />
                 <div className="p-4">
                   <h3 className="font-semibold text-lg mb-1">{podcast.title}</h3>
-                  <p className="text-gray-400 text-sm">{podcast.host}</p>
+                  <p className="text-gray-400 text-sm">{podcast.duration}</p>
                 </div>
               </div>
             ))}
@@ -120,7 +201,7 @@ export default function PodcastPlayer() {
             <img src={currentPodcast?.cover} alt="Current podcast" className="w-16 h-16 rounded" />
             <div>
               <h3 className="font-semibold">{currentPodcast?.title || 'No podcast selected'}</h3>
-              <p className="text-gray-400 text-sm">{currentPodcast?.host || 'Select a podcast to play'}</p>
+              <p className="text-gray-400 text-sm">{currentPodcast?.duration || 'Select a podcast to play'}</p>
             </div>
           </div>
           <div className="flex-1 max-w-md mx-4">
@@ -133,9 +214,15 @@ export default function PodcastPlayer() {
                 size="icon" 
                 className="text-purple-300 hover:text-purple-100 hover:bg-purple-800" 
                 onClick={togglePlayPause}
-                disabled={!currentPodcast}
+                disabled={!currentPodcast || isLoading}
               >
-                {isPlaying ? <Pause className="h-8 w-8" /> : <Play className="h-8 w-8" />}
+                {isLoading ? (
+                  <span className="animate-spin">⌛</span>
+                ) : isPlaying ? (
+                  <Pause className="h-8 w-8" />
+                ) : (
+                  <Play className="h-8 w-8" />
+                )}
               </Button>
               <Button variant="ghost" size="icon" className="text-purple-300 hover:text-purple-100 hover:bg-purple-800">
                 <SkipForward className="h-5 w-5" />
