@@ -41,9 +41,9 @@ const parser: Parser<CustomFeed, CustomItem> = new Parser({
       ['itunes:duration', 'itunes.duration'],
       'contentSnippet'
     ],
-    feed: [
-      ['image', 'image.url']
-    ]
+    feed: {
+      image: 'image.url'
+    }
   }
 });
 
