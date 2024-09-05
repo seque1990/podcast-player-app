@@ -1,12 +1,14 @@
+'use client';
+
 import React, { useState, useRef, useEffect } from 'react';
 import PodcastLayout from './podcast-layout';
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Slider } from "@/components/ui/slider"
 import { Play, Pause, SkipBack, SkipForward, Clock, Calendar, Search, Volume2, Headphones, Share2 } from 'lucide-react'
-import { createPodcastClient } from '@/utils/podcastApiUtils';
+import { PodcastShow, PodcastEpisode } from 'podcast-api';
 import DOMPurify from 'dompurify';
-
+import { createPodcastClient } from '@/utils/podcastApiUtils';
 
 type PodcastShow = {
   id: string;
@@ -34,9 +36,9 @@ const client = createPodcastClient();
 
 export default function PodcastShowDetails({ show }: { show: PodcastShow }) {
   const [searchTerm, setSearchTerm] = useState("")
-  const [episodes, setEpisodes] = useState<PodcastEpisode[]>([])
   const [isPlaying, setIsPlaying] = useState(false)
   const [progress, setProgress] = useState(0)
+  const [episodes, setEpisodes] = useState([])
   const [currentEpisode, setCurrentEpisode] = useState<PodcastEpisode | null>(null)
   const [volume, setVolume] = useState(75)
   const [currentTime, setCurrentTime] = useState(0)
@@ -64,7 +66,7 @@ export default function PodcastShowDetails({ show }: { show: PodcastShow }) {
     }
   };
 
-  const filteredEpisodes = episodes.filter(episode =>
+  const filteredEpisodes = show.episodes.filter(episode =>
     episode.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
     episode.description.toLowerCase().includes(searchTerm.toLowerCase())
   )
