@@ -15,7 +15,7 @@ type PodcastShow = {
   listennotes_url: string;
 };
 
-const client = Client({ apiKey: process.env.NEXT_PUBLIC_LISTENNOTES_API_KEY });
+const client = Client({ apiKey: process.env.NEXT_PUBLIC_LISTENNOTES_API_KEY || '' });
 
 export default function PodcastShowsList() {
   const [podcastShows, setPodcastShows] = useState<PodcastShow[]>([]);

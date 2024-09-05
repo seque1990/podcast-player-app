@@ -17,7 +17,8 @@ type PodcastShow = {
   website: string;
 }
 
-const client = Client({ apiKey: process.env.NEXT_PUBLIC_LISTENNOTES_API_KEY });
+const client = Client({ apiKey: process.env.NEXT_PUBLIC_LISTENNOTES_API_KEY || '' });
+
 
 export default function PodcastPage() {
   const params = useParams();
