@@ -1,5 +1,3 @@
-// Create a new file named 'podcastData.ts' in your src/lib directory
-
 import { createPodcastClient } from '@/utils/podcastApiUtils';
 import { PodcastShow } from 'podcast-api';
 

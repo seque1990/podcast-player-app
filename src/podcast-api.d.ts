@@ -1,4 +1,4 @@
-// Update your podcast-api.d.ts file
+// podcast-api.d.ts
 declare module 'podcast-api' {
   export interface ClientOptions {
     apiKey: string;
@@ -24,8 +24,8 @@ declare module 'podcast-api' {
     explicit_content: boolean;
     website: string;
     episodes: PodcastEpisode[];
-    listennotes_url?: string; // Make this optional
-    genre_ids?: number[]; // Make this optional
+    listennotes_url: string;
+    genre_ids: number[];
   }
 
   export interface PodcastResponse {
@@ -34,7 +34,6 @@ declare module 'podcast-api' {
 
   export interface PodcastClient {
     fetchPodcastById(params: { id: string; sort?: string }): Promise<PodcastResponse>;
-    // Add other methods as needed
   }
 
   export function Client(options: ClientOptions): PodcastClient;
