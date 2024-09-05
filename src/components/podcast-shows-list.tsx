@@ -6,7 +6,6 @@ import PodcastLayout from './podcast-layout';
 import { Client } from 'podcast-api';
 import { createPodcastClient } from '@/utils/podcastApiUtils';
 
-
 type PodcastShow = {
   id: string;
   title: string;
