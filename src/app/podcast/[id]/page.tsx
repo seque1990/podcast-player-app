@@ -2,57 +2,60 @@
 
 import { useParams } from 'next/navigation'
 import PodcastShowDetails from '@/components/podcast-show-details'
+import { useState, useEffect } from 'react';
+import { Client } from 'podcast-api';
 
-// Update this type to match the PodcastShow type in podcast-show-details.tsx
 type PodcastShow = {
-  id: number;
+  id: string;
   title: string;
-  host: string;
-  summary: string;
-  cover: string;
-  rssUrl: string;
-  category: string;
+  publisher: string;
+  description: string;
+  image: string;
+  total_episodes: number;
+  listennotes_url: string;
+  genre_ids: number[];
+  website: string;
 }
 
-const podcastFeeds: PodcastShow[] = [
-  { 
-    id: 1, 
-    rssUrl: "https://allinchamathjason.libsyn.com/rss", 
-    title: "All-In Podcast", 
-    host: "Chamath, Jason, Sacks & Friedberg", 
-    cover: "/placeholder.svg",
-    summary: "Industry veterans discussing tech, politics, and economics.",
-    category: "Technology"
-  },
-  { 
-    id: 2, 
-    rssUrl: "https://feeds.megaphone.fm/hubermanlab", 
-    title: "Huberman Lab", 
-    host: "Andrew Huberman", 
-    cover: "/placeholder.svg",
-    summary: "Science and science-based tools for everyday life.",
-    category: "Science"
-  },
-  { 
-    id: 3, 
-    rssUrl: "https://lexfridman.com/feed/podcast/", 
-    title: "Lex Fridman Podcast", 
-    host: "Lex Fridman", 
-    cover: "/placeholder.svg",
-    summary: "Conversations about science, technology, history, philosophy and the nature of intelligence, consciousness, love, and power.",
-    category: "Technology"
-  },
-  // Add more podcast shows here
-];
+const client = Client({ apiKey: process.env.NEXT_PUBLIC_LISTENNOTES_API_KEY });
 
 export default function PodcastPage() {
-  const params = useParams()
-  const showId = parseInt(params.id as string)
-  const show = podcastFeeds.find(s => s.id === showId)
+  const params = useParams();
+  const [show, setShow] = useState<PodcastShow | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  if (!show) {
-    return <div>Podcast not found</div>
+  useEffect(() => {
+    fetchPodcastDetails();
+  }, [params.id]);
+
+  const fetchPodcastDetails = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const response = await client.fetchPodcastById({
+        id: params.id as string
+      });
+      setShow(response.data);
+    } catch (error) {
+      console.error('Error fetching podcast details:', error);
+      setError('Failed to fetch podcast details. Please try again later.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  if (isLoading) {
+    return <div>Loading...</div>;
   }
 
-  return <PodcastShowDetails show={show} />
+  if (error) {
+    return <div>{error}</div>;
+  }
+
+  if (!show) {
+    return <div>Podcast not found</div>;
+  }
+
+  return <PodcastShowDetails show={show} />;
 }

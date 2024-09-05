@@ -1,34 +1,36 @@
-'use client';
-
 import React, { useState, useRef, useEffect } from 'react';
 import PodcastLayout from './podcast-layout';
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Slider } from "@/components/ui/slider"
 import { Play, Pause, SkipBack, SkipForward, Clock, Calendar, Search, Volume2, Headphones, Share2 } from 'lucide-react'
-import Parser from 'rss-parser';
+import { Client } from 'podcast-api';
+import DOMPurify from 'dompurify';
+
 
 type PodcastShow = {
-  id: number;
+  id: string;
   title: string;
-  host: string;
-  summary: string;
-  cover: string;
-  rssUrl: string;
-  category: string;
+  publisher: string;
+  description: string;
+  image: string;
+  total_episodes: number;
+  listennotes_url: string;
+  genre_ids: number[];
+  website: string;
 }
 
 type PodcastEpisode = {
   id: string;
   title: string;
-  duration: string;
-  date: string;
   description: string;
-  audioUrl: string;
-  image: string;
+  pub_date_ms: number;
+  audio_length_sec: number;
+  audio: string;
+  thumbnail: string;
 }
 
-const parser = new Parser();
+const client = Client({ apiKey: process.env.NEXT_PUBLIC_LISTENNOTES_API_KEY });
 
 export default function PodcastShowDetails({ show }: { show: PodcastShow }) {
   const [searchTerm, setSearchTerm] = useState("")
@@ -41,41 +43,22 @@ export default function PodcastShowDetails({ show }: { show: PodcastShow }) {
   const [duration, setDuration] = useState<number | null>(null)
   const [isSubscribed, setIsSubscribed] = useState(false)
   const audioRef = useRef<HTMLAudioElement>(null)
-  const [showInfo, setShowInfo] = useState<PodcastShow>(show);
 
   useEffect(() => {
-    console.log('Show cover:', showInfo.cover);
     fetchEpisodes();
-  }, [showInfo.rssUrl]);
+  }, [show.id]);
 
   const fetchEpisodes = async () => {
     try {
-      const feed = await parser.parseURL(showInfo.rssUrl);
-      const parsedEpisodes: PodcastEpisode[] = feed.items.map((item, index) => ({
-        id: item.guid || `${index}`,
-        title: item.title || '',
-        duration: item.itunes?.duration || '',
-        date: item.pubDate || '',
-        description: item.contentSnippet || '',
-        audioUrl: item.enclosure?.url || '',
-        image: item.itunes?.image || feed.image?.url || showInfo.cover,
-      }));
-      setEpisodes(parsedEpisodes);
-      
-      // Update show information
-      const updatedShow = { ...showInfo };
-      if (feed.image?.url) {
-        updatedShow.cover = feed.image.url;
-      } else if (feed.itunes?.image) {
-        updatedShow.cover = feed.itunes.image;
+      const response = await client.fetchPodcastById({
+        id: show.id,
+        sort: 'recent_first'
+      });
+      if (response.data && response.data.episodes) {
+        setEpisodes(response.data.episodes);
+      } else {
+        console.error('Unexpected response structure:', response);
       }
-      
-      // Update show summary if available in the feed
-      if (feed.description) {
-        updatedShow.summary = feed.description;
-      }
-      
-      setShowInfo(updatedShow);
     } catch (error) {
       console.error('Error fetching episodes:', error);
     }
@@ -101,7 +84,7 @@ export default function PodcastShowDetails({ show }: { show: PodcastShow }) {
     setCurrentEpisode(episode)
     setIsPlaying(true)
     if (audioRef.current) {
-      audioRef.current.src = episode.audioUrl
+      audioRef.current.src = episode.audio
       audioRef.current.play()
     }
   }
@@ -146,12 +129,18 @@ export default function PodcastShowDetails({ show }: { show: PodcastShow }) {
     }
   }
 
+  const sanitizeHTML = (html: string) => {
+    return {
+      __html: DOMPurify.sanitize(html)
+    };
+  };
+
   return (
     <PodcastLayout
       currentEpisode={currentEpisode ? {
         title: currentEpisode.title,
-        show: showInfo.title,
-        image: currentEpisode.image
+        show: show.title,
+        image: currentEpisode.thumbnail
       } : null}
       isPlaying={isPlaying}
       togglePlayPause={togglePlayPause}
@@ -172,8 +161,8 @@ export default function PodcastShowDetails({ show }: { show: PodcastShow }) {
         <header className="bg-black bg-opacity-50 backdrop-blur-lg py-6 sticky top-0 z-10">
           <div className="container mx-auto px-4 flex justify-between items-center">
             <div className="flex items-center space-x-4">
-              <img src={showInfo.cover || '/placeholder.svg'} alt={showInfo.title} className="w-16 h-16 rounded-lg" />
-              <h1 className="text-3xl font-bold">{showInfo.title}</h1>
+              <img src={show.image} alt={show.title} className="w-16 h-16 rounded-lg" />
+              <h1 className="text-3xl font-bold">{show.title}</h1>
             </div>
             <Button 
               className={`${isSubscribed ? 'bg-purple-700' : 'bg-purple-600'} hover:bg-purple-700 text-white`}
@@ -189,20 +178,20 @@ export default function PodcastShowDetails({ show }: { show: PodcastShow }) {
           <div className="container mx-auto px-4">
             <div className="flex flex-col md:flex-row gap-8 items-center md:items-start">
               <img 
-                src={showInfo.cover || '/placeholder.svg'} 
-                alt={showInfo.title} 
+                src={show.image} 
+                alt={show.title} 
                 className="w-64 h-64 object-cover rounded-lg shadow-lg transform hover:scale-105 transition-transform duration-300"
               />
               <div className="flex-1">
                 <h2 className="text-2xl font-semibold mb-4">About the Show</h2>
-                <p className="text-gray-300 mb-4">{showInfo.summary}</p>
+                <p className="text-gray-300 mb-4">{show.description}</p>
                 <div className="flex items-center space-x-4 mb-4">
                   <span className="bg-purple-800 text-purple-200 px-3 py-1 rounded-full text-sm">
-                    {showInfo.category}
+                    {show.genre_ids[0]} {/* You might want to map this to actual genre names */}
                   </span>
                   <span className="flex items-center text-gray-300">
                     <Headphones className="h-5 w-5 mr-2" />
-                    {episodes.length} episodes
+                    {show.total_episodes} episodes
                   </span>
                 </div>
                 <div className="flex space-x-4">
@@ -232,17 +221,14 @@ export default function PodcastShowDetails({ show }: { show: PodcastShow }) {
               </div>
             </div>
             <div className="space-y-6">
-              {episodes.filter(episode =>
-                episode.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                episode.description.toLowerCase().includes(searchTerm.toLowerCase())
-              ).map((episode) => (
+              {filteredEpisodes.map((episode) => (
                 <div 
                   key={episode.id} 
                   className="bg-gray-800 bg-opacity-50 backdrop-blur-lg rounded-lg p-6 hover:bg-opacity-70 transition-all duration-300 transform hover:scale-102 cursor-pointer"
                   onClick={() => handleEpisodeClick(episode)}
                 >
                   <div className="flex flex-col md:flex-row gap-4">
-                    <img src={episode.image} alt={episode.title} className="w-full md:w-48 h-48 object-cover rounded-lg" />
+                    <img src={episode.thumbnail} alt={episode.title} className="w-full md:w-48 h-48 object-cover rounded-lg" />
                     <div className="flex-1">
                       <div className="flex items-center justify-between mb-4">
                         <h3 className="text-xl font-semibold">{episode.title}</h3>
@@ -250,12 +236,14 @@ export default function PodcastShowDetails({ show }: { show: PodcastShow }) {
                           <Play className="h-6 w-6" />
                         </Button>
                       </div>
-                      <p className="text-gray-300 mb-4">{episode.description}</p>
-                      <div className="flex items-center text-sm text-gray-400">
+                      <div 
+                        className="text-gray-300 mb-4 prose prose-invert max-w-none"
+                        dangerouslySetInnerHTML={sanitizeHTML(episode.description)}
+                      />                      <div className="flex items-center text-sm text-gray-400">
                         <Clock className="h-4 w-4 mr-2" />
-                        <span className="mr-4">{episode.duration}</span>
+                        <span className="mr-4">{formatTime(episode.audio_length_sec)}</span>
                         <Calendar className="h-4 w-4 mr-2" />
-                        <span>{new Date(episode.date).toLocaleDateString()}</span>
+                        <span>{new Date(episode.pub_date_ms).toLocaleDateString()}</span>
                       </div>
                     </div>
                   </div>
