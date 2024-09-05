@@ -36,16 +36,5 @@ declare module 'podcast-api' {
     fetchPodcastById(params: { id: string; sort?: string }): Promise<PodcastResponse>;
   }
 
-  declare module 'podcast-api' {
-    interface PodcastClient {
-      fetchBestPodcasts(options: {
-        region?: string;
-        safe_mode?: number;
-        genre_id?: string;
-        page?: number;
-      }): Promise<any>;
-    }
-  }
-
   export function Client(options: ClientOptions): PodcastClient;
 }
