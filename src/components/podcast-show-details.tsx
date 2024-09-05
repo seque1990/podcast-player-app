@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Slider } from "@/components/ui/slider"
 import { Play, Pause, SkipBack, SkipForward, Clock, Calendar, Search, Volume2, Headphones, Share2 } from 'lucide-react'
-import { PodcastShow as ApiPodcastShow, PodcastEpisode } from 'podcast-api';
+import { PodcastShow as ApiPodcastShow, PodcastEpisode as ApiPodcastEpisode } from 'podcast-api';
 import DOMPurify from 'dompurify';
 import { createPodcastClient } from '@/utils/podcastApiUtils';
 
@@ -35,11 +35,11 @@ type PodcastEpisode = {
 const client = createPodcastClient();
 
 export default function PodcastShowDetails({ show }: { show: ApiPodcastShow }) {
+  const [currentEpisode, setCurrentEpisode] = useState<ApiPodcastEpisode | null>(null);
   const [searchTerm, setSearchTerm] = useState("")
   const [isPlaying, setIsPlaying] = useState(false)
   const [progress, setProgress] = useState(0)
   const [episodes, setEpisodes] = useState([])
-  const [currentEpisode, setCurrentEpisode] = useState<PodcastEpisode | null>(null)
   const [volume, setVolume] = useState(75)
   const [currentTime, setCurrentTime] = useState(0)
   const [duration, setDuration] = useState<number | null>(null)
