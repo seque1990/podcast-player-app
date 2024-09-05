@@ -37,7 +37,7 @@ export default function PodcastShowDetails({ show }: { show: ApiPodcastShow }) {
   const [searchTerm, setSearchTerm] = useState("")
   const [isPlaying, setIsPlaying] = useState(false)
   const [progress, setProgress] = useState(0)
-  const [episodes, setEpisodes] = useState([])
+  const [episodes, setEpisodes] = useState<ApiPodcastEpisode[]>([]);
   const [volume, setVolume] = useState(75)
   const [currentTime, setCurrentTime] = useState(0)
   const [duration, setDuration] = useState<number | null>(null)
