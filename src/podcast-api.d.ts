@@ -32,8 +32,15 @@ declare module 'podcast-api' {
     data: PodcastShow;
   }
 
+  export interface BestPodcastsResponse {
+    data: {
+      podcasts: PodcastShow[];
+    };
+  }
+
   export interface PodcastClient {
     fetchPodcastById(params: { id: string; sort?: string }): Promise<PodcastResponse>;
+    fetchBestPodcasts(params: { region: string; safe_mode: number }): Promise<BestPodcastsResponse>; // Add this line
   }
 
   export function Client(options: ClientOptions): PodcastClient;
