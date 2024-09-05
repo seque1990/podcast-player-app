@@ -1,11 +1,10 @@
-// Create a new file named 'podcast-api.d.ts' in your project's root or src directory
+// Update your podcast-api.d.ts file
 declare module 'podcast-api' {
     export interface ClientOptions {
       apiKey: string;
     }
   
     export interface PodcastResponse {
-      // Add properties based on the actual response structure
       data: {
         episodes: Array<{
           id: string;
@@ -19,9 +18,10 @@ declare module 'podcast-api' {
       };
     }
   
-    export class Client {
-      constructor(options: ClientOptions);
+    export interface PodcastClient {
       fetchPodcastById(params: { id: string; sort?: string }): Promise<PodcastResponse>;
       // Add other methods as needed
     }
+  
+    export function Client(options: ClientOptions): PodcastClient;
   }

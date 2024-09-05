@@ -4,6 +4,8 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import PodcastLayout from './podcast-layout';
 import { Client } from 'podcast-api';
+import { createPodcastClient } from '@/utils/podcastApiUtils';
+
 
 type PodcastShow = {
   id: string;
@@ -15,7 +17,7 @@ type PodcastShow = {
   listennotes_url: string;
 };
 
-const client = Client({ apiKey: process.env.NEXT_PUBLIC_LISTENNOTES_API_KEY || '' });
+const client = createPodcastClient();
 
 export default function PodcastShowsList() {
   const [podcastShows, setPodcastShows] = useState<PodcastShow[]>([]);

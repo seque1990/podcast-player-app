@@ -4,6 +4,8 @@ import { useParams } from 'next/navigation'
 import PodcastShowDetails from '@/components/podcast-show-details'
 import { useState, useEffect } from 'react';
 import { Client } from 'podcast-api';
+import { createPodcastClient } from '@/utils/podcastApiUtils';
+
 
 type PodcastShow = {
   id: string;
@@ -17,8 +19,7 @@ type PodcastShow = {
   website: string;
 }
 
-const client = Client({ apiKey: process.env.NEXT_PUBLIC_LISTENNOTES_API_KEY || '' });
-
+const client = createPodcastClient();
 
 export default function PodcastPage() {
   const params = useParams();

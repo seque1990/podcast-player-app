@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Slider } from "@/components/ui/slider"
 import { Play, Pause, SkipBack, SkipForward, Clock, Calendar, Search, Volume2, Headphones, Share2 } from 'lucide-react'
-import { Client } from 'podcast-api';
+import { createPodcastClient } from '@/utils/podcastApiUtils';
 import DOMPurify from 'dompurify';
 
 
@@ -30,7 +30,7 @@ type PodcastEpisode = {
   thumbnail: string;
 }
 
-const client = Client({ apiKey: process.env.NEXT_PUBLIC_LISTENNOTES_API_KEY || '' });
+const client = createPodcastClient();
 
 export default function PodcastShowDetails({ show }: { show: PodcastShow }) {
   const [searchTerm, setSearchTerm] = useState("")
