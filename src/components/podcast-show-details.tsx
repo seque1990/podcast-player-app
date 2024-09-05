@@ -4,10 +4,8 @@ import React, { useState, useRef, useEffect } from 'react';
 import PodcastLayout from './podcast-layout';
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Slider } from "@/components/ui/slider"
 import { Play, Pause, SkipBack, SkipForward, Clock, Calendar, Search, Volume2, Headphones, Share2 } from 'lucide-react'
 import { PodcastShow as ApiPodcastShow, PodcastEpisode as ApiPodcastEpisode } from 'podcast-api';
-import DOMPurify from 'dompurify';
 import { createPodcastClient } from '@/utils/podcastApiUtils';
 
 type PodcastShow = {
@@ -133,7 +131,7 @@ export default function PodcastShowDetails({ show }: { show: ApiPodcastShow }) {
 
   const sanitizeHTML = (html: string) => {
     return {
-      __html: DOMPurify.sanitize(html)
+      __html: html
     };
   };
 
