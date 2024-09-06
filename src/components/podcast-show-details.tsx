@@ -125,7 +125,7 @@ export default function PodcastShowDetails({ initialShow }: { initialShow: Podca
       currentEpisode={currentEpisode ? {
         title: currentEpisode.title,
         show: show.title,
-        image: currentEpisode.thumbnail || currentEpisode.image || ''
+        image: currentEpisode.thumbnail || ''
       } : null}
       isPlaying={isPlaying}
       togglePlayPause={togglePlayPause}
