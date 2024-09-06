@@ -6,7 +6,7 @@ import PodcastLayout from './podcast-layout';
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Play, Pause, SkipBack, SkipForward, Clock, Calendar, Search, Volume2, Headphones, Share2 } from 'lucide-react'
-import { PodcastShow as ApiPodcastShow, Episode as ApiPodcastEpisode } from 'podcast-api';
+import { PodcastShow as ApiPodcastShow } from 'podcast-api';
 import { createPodcastClient } from '@/utils/podcastApiUtils';
 import { getFallbackPodcastById } from '@/utils/fallbackPodcasts';
 import { ParsedFeed, ParsedEpisode } from '@/utils/rssFeedParser';
@@ -14,7 +14,16 @@ import { ParsedFeed, ParsedEpisode } from '@/utils/rssFeedParser';
 const client = createPodcastClient();
 
 type PodcastShow = ApiPodcastShow | ParsedFeed;
-type PodcastEpisode = ApiPodcastEpisode | ParsedEpisode;
+type PodcastEpisode = {
+  id: string;
+  title: string;
+  description: string;
+  pub_date_ms: number;
+  audio_length_sec: number;
+  audio: string;
+  thumbnail?: string;
+  image?: string;
+};
 
 export default function PodcastShowDetails({ initialShow }: { initialShow: PodcastShow }) {
   const searchParams = useSearchParams();
@@ -133,7 +142,7 @@ export default function PodcastShowDetails({ initialShow }: { initialShow: Podca
       currentEpisode={currentEpisode ? {
         title: currentEpisode.title,
         show: show.title,
-        image: 'thumbnail' in currentEpisode ? currentEpisode.thumbnail : currentEpisode.image
+        image: currentEpisode.thumbnail || currentEpisode.image || ''
       } : null}
       isPlaying={isPlaying}
       togglePlayPause={togglePlayPause}
