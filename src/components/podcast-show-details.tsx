@@ -6,7 +6,7 @@ import PodcastLayout from './podcast-layout';
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Play, Pause, SkipBack, SkipForward, Clock, Calendar, Search, Volume2, Headphones, Share2 } from 'lucide-react'
-import { PodcastShow as ApiPodcastShow, PodcastEpisode as ApiPodcastEpisode } from 'podcast-api';
+import { PodcastShow as ApiPodcastShow, Episode as ApiPodcastEpisode } from 'podcast-api';
 import { createPodcastClient } from '@/utils/podcastApiUtils';
 import { getFallbackPodcastById } from '@/utils/fallbackPodcasts';
 import { ParsedFeed, ParsedEpisode } from '@/utils/rssFeedParser';
@@ -43,7 +43,7 @@ export default function PodcastShowDetails({ initialShow }: { initialShow: Podca
   const fetchEpisodes = async () => {
     if (usingFallback) return;
     try {
-      const response = await client.fetchEpisodesByPodcastId({
+      const response = await client.fetchEpisodes({
         id: show.id,
         sort: 'recent_first'
       });
