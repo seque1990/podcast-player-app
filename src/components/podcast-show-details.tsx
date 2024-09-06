@@ -45,24 +45,25 @@ export default function PodcastShowDetails({ initialShow }: { initialShow: Podca
     if (usingFallback) {
       setEpisodes(show.episodes || []);
     } else {
-      fetchEpisodes();
+      fetchPodcastAndEpisodes();
     }
   }, [show.id, usingFallback]);
 
-  const fetchEpisodes = async () => {
+  const fetchPodcastAndEpisodes = async () => {
     if (usingFallback) return;
     try {
-      const response = await client.fetchEpisodes({
+      const response = await client.fetchPodcastById({
         id: show.id,
         sort: 'recent_first'
       });
-      if (response.data && response.data.episodes) {
-        setEpisodes(response.data.episodes);
+      if (response.data) {
+        setShow(response.data);
+        setEpisodes(response.data.episodes || []);
       } else {
         console.error('Unexpected response structure:', response);
       }
     } catch (error) {
-      console.error('Error fetching episodes:', error);
+      console.error('Error fetching podcast and episodes:', error);
     }
   };
 
