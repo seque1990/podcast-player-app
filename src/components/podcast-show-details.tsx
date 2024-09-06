@@ -1,43 +1,31 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import PodcastLayout from './podcast-layout';
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Play, Pause, SkipBack, SkipForward, Clock, Calendar, Search, Volume2, Headphones, Share2 } from 'lucide-react'
 import { PodcastShow as ApiPodcastShow, PodcastEpisode as ApiPodcastEpisode } from 'podcast-api';
 import { createPodcastClient } from '@/utils/podcastApiUtils';
-
-type PodcastShow = {
-  id: string;
-  title: string;
-  publisher: string;
-  description: string;
-  image: string;
-  total_episodes: number;
-  listennotes_url: string;
-  genre_ids: number[];
-  website: string;
-}
-
-type PodcastEpisode = {
-  id: string;
-  title: string;
-  description: string;
-  pub_date_ms: number;
-  audio_length_sec: number;
-  audio: string;
-  thumbnail: string;
-}
+import { getFallbackPodcastById } from '@/utils/fallbackPodcasts';
+import { ParsedFeed, ParsedEpisode } from '@/utils/rssFeedParser';
 
 const client = createPodcastClient();
 
-export default function PodcastShowDetails({ show }: { show: ApiPodcastShow }) {
-  const [currentEpisode, setCurrentEpisode] = useState<ApiPodcastEpisode | null>(null);
+type PodcastShow = ApiPodcastShow | ParsedFeed;
+type PodcastEpisode = ApiPodcastEpisode | ParsedEpisode;
+
+export default function PodcastShowDetails({ initialShow }: { initialShow: PodcastShow }) {
+  const searchParams = useSearchParams();
+  const usingFallback = searchParams.get('fallback') === 'true';
+
+  const [show, setShow] = useState<PodcastShow>(initialShow);
+  const [currentEpisode, setCurrentEpisode] = useState<PodcastEpisode | null>(null);
   const [searchTerm, setSearchTerm] = useState("")
   const [isPlaying, setIsPlaying] = useState(false)
   const [progress, setProgress] = useState(0)
-  const [episodes, setEpisodes] = useState<ApiPodcastEpisode[]>([]);
+  const [episodes, setEpisodes] = useState<PodcastEpisode[]>([]);
   const [volume, setVolume] = useState(75)
   const [currentTime, setCurrentTime] = useState(0)
   const [duration, setDuration] = useState<number | null>(null)
@@ -45,12 +33,17 @@ export default function PodcastShowDetails({ show }: { show: ApiPodcastShow }) {
   const audioRef = useRef<HTMLAudioElement>(null)
 
   useEffect(() => {
-    fetchEpisodes();
-  }, [show.id]);
+    if (usingFallback) {
+      setEpisodes(show.episodes || []);
+    } else {
+      fetchEpisodes();
+    }
+  }, [show.id, usingFallback]);
 
   const fetchEpisodes = async () => {
+    if (usingFallback) return;
     try {
-      const response = await client.fetchPodcastById({
+      const response = await client.fetchEpisodesByPodcastId({
         id: show.id,
         sort: 'recent_first'
       });
@@ -64,7 +57,7 @@ export default function PodcastShowDetails({ show }: { show: ApiPodcastShow }) {
     }
   };
 
-  const filteredEpisodes = show.episodes.filter(episode =>
+  const filteredEpisodes = episodes.filter(episode =>
     episode.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
     episode.description.toLowerCase().includes(searchTerm.toLowerCase())
   )
@@ -140,7 +133,7 @@ export default function PodcastShowDetails({ show }: { show: ApiPodcastShow }) {
       currentEpisode={currentEpisode ? {
         title: currentEpisode.title,
         show: show.title,
-        image: currentEpisode.thumbnail
+        image: 'thumbnail' in currentEpisode ? currentEpisode.thumbnail : currentEpisode.image
       } : null}
       isPlaying={isPlaying}
       togglePlayPause={togglePlayPause}
@@ -186,9 +179,15 @@ export default function PodcastShowDetails({ show }: { show: ApiPodcastShow }) {
                 <h2 className="text-2xl font-semibold mb-4">About the Show</h2>
                 <p className="text-gray-300 mb-4">{show.description}</p>
                 <div className="flex items-center space-x-4 mb-4">
-                  <span className="bg-purple-800 text-purple-200 px-3 py-1 rounded-full text-sm">
-                    {show.genre_ids[0]} {/* You might want to map this to actual genre names */}
-                  </span>
+                  {('genre_ids' in show && show.genre_ids && show.genre_ids.length > 0) ? (
+                    <span className="bg-purple-800 text-purple-200 px-3 py-1 rounded-full text-sm">
+                      {show.genre_ids[0]} {/* You might want to map this to actual genre names */}
+                    </span>
+                  ) : (
+                    <span className="bg-purple-800 text-purple-200 px-3 py-1 rounded-full text-sm">
+                      Podcast
+                    </span>
+                  )}
                   <span className="flex items-center text-gray-300">
                     <Headphones className="h-5 w-5 mr-2" />
                     {show.total_episodes} episodes

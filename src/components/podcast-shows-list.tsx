@@ -15,6 +15,7 @@ export default function PodcastShowsList() {
   const [podcastShows, setPodcastShows] = useState<PodcastShow[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [usingFallback, setUsingFallback] = useState(false);
 
   useEffect(() => {
     fetchPodcastShows();
@@ -29,12 +30,14 @@ export default function PodcastShowsList() {
         safe_mode: 1,
       });
       setPodcastShows(response.data.podcasts);
+      setUsingFallback(false);
     } catch (error) {
       console.error('Error fetching podcasts:', error);
       if (error.response && error.response.status === 429) {
         console.log('Rate limit reached. Using fallback data.');
         const fallbackPodcasts = await getFallbackPodcasts();
         setPodcastShows(fallbackPodcasts);
+        setUsingFallback(true);
       } else {
         setError('Failed to fetch podcasts. Please try again later.');
       }
@@ -61,7 +64,7 @@ export default function PodcastShowsList() {
         {error && <p className="text-red-500">{error}</p>}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {podcastShows.map((podcast) => (
-            <Link href={`/podcast/${podcast.id}`} key={podcast.id}>
+            <Link href={`/podcast/${podcast.id}?fallback=${usingFallback}`} key={podcast.id}>
               <div className="bg-gray-800 rounded-lg overflow-hidden hover:bg-gray-700 transition-colors cursor-pointer">
                 <div className="aspect-square relative">
                   <img src={podcast.image} alt={podcast.title} className="w-full h-full object-cover" />
