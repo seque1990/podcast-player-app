@@ -3,24 +3,42 @@
 import { getPodcastData } from '@/lib/podcastData';
 import PodcastShowDetails from '@/components/podcast-show-details';
 import { ParsedFeed } from '@/utils/rssFeedParser';
-import { Suspense } from 'react';
+import { getFallbackPodcasts } from '@/utils/fallbackPodcasts';
 
-async function PodcastDetails({ id }: { id: string }) {
-  const show: ParsedFeed = await getPodcastData(id);
-  return <PodcastShowDetails initialShow={show} />;
-}
-
-export default function PodcastPage({ params }: { params: { id: string } }) {
-  return (
-    <Suspense fallback={<div className="text-white">Loading podcast details...</div>}>
-      <PodcastDetails id={params.id} />
-    </Suspense>
-  );
-}
+export const revalidate = 3600; // Revalidate every hour
 
 export async function generateStaticParams() {
-  // This function should return an array of all possible podcast IDs
-  // For now, we'll return an empty array, but you should implement this
-  // to generate static pages for all your podcasts
-  return [];
+  const podcasts = await getFallbackPodcasts();
+  return podcasts.map((podcast) => ({
+    id: podcast.id,
+  }));
+}
+
+export default async function PodcastPage({ params }: { params: { id: string } }) {
+  try {
+    const show: ParsedFeed = await getPodcastData(params.id);
+    
+    // Only pass necessary data to the client
+    const simplifiedShow = {
+      id: show.id,
+      title: show.title,
+      description: show.description,
+      image: show.image,
+      total_episodes: show.total_episodes,
+      episodes: show.episodes.map(episode => ({
+        id: episode.id,
+        title: episode.title,
+        description: episode.description,
+        pub_date_ms: episode.pub_date_ms,
+        audio_length_sec: episode.audio_length_sec,
+        audio: episode.audio,
+        thumbnail: episode.thumbnail,
+      })),
+    };
+
+    return <PodcastShowDetails initialShow={simplifiedShow} />;
+  } catch (error) {
+    console.error('Error fetching podcast data:', error);
+    return <div className="text-red-500">Failed to fetch podcast details. Please try again later.</div>;
+  }
 }

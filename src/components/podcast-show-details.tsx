@@ -1,20 +1,33 @@
 'use client';
 
-import React, { useState, useEffect, useRef, lazy, Suspense } from 'react';
+import React, { useState, useRef, lazy, Suspense } from 'react';
 import PodcastLayout from './podcast-layout';
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Play, Clock, Calendar, Search, Headphones, Share2 } from 'lucide-react'
-import { ParsedFeed, ParsedEpisode } from '@/utils/rssFeedParser';
+import { Headphones, Share2 } from 'lucide-react'
 
 const EpisodeList = lazy(() => import('./EpisodeList'));
 
-type PodcastShow = ParsedFeed;
-type PodcastEpisode = ParsedEpisode;
+type SimplifiedPodcastShow = {
+  id: string;
+  title: string;
+  description: string;
+  image: string;
+  total_episodes: number;
+  episodes: SimplifiedPodcastEpisode[];
+};
 
-export default function PodcastShowDetails({ initialShow }: { initialShow: PodcastShow }) {
-  const [show] = useState<PodcastShow>(initialShow);
-  const [currentEpisode, setCurrentEpisode] = useState<PodcastEpisode | null>(null);
+type SimplifiedPodcastEpisode = {
+  id: string;
+  title: string;
+  description: string;
+  pub_date_ms: number;
+  audio_length_sec: number;
+  audio: string;
+  thumbnail: string;
+};
+
+export default function PodcastShowDetails({ initialShow }: { initialShow: SimplifiedPodcastShow }) {
+  const [currentEpisode, setCurrentEpisode] = useState<SimplifiedPodcastEpisode | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
   const [volume, setVolume] = useState(75);
@@ -62,7 +75,7 @@ export default function PodcastShowDetails({ initialShow }: { initialShow: Podca
     <PodcastLayout
       currentEpisode={currentEpisode ? {
         title: currentEpisode.title,
-        show: show.title,
+        show: initialShow.title,
         image: currentEpisode.thumbnail || ''
       } : null}
       isPlaying={isPlaying}
@@ -84,8 +97,8 @@ export default function PodcastShowDetails({ initialShow }: { initialShow: Podca
         <header className="bg-black bg-opacity-50 backdrop-blur-lg py-6 sticky top-0 z-10">
           <div className="container mx-auto px-4 flex justify-between items-center">
             <div className="flex items-center space-x-4">
-              <img src={show.image} alt={show.title} className="w-16 h-16 rounded-lg" />
-              <h1 className="text-3xl font-bold">{show.title}</h1>
+              <img src={initialShow.image} alt={initialShow.title} className="w-16 h-16 rounded-lg" />
+              <h1 className="text-3xl font-bold">{initialShow.title}</h1>
             </div>
             <Button 
               className={`${isSubscribed ? 'bg-purple-700' : 'bg-purple-600'} hover:bg-purple-700 text-white`}
@@ -101,20 +114,20 @@ export default function PodcastShowDetails({ initialShow }: { initialShow: Podca
           <div className="container mx-auto px-4">
             <div className="flex flex-col md:flex-row gap-8 items-center md:items-start">
               <img 
-                src={show.image} 
-                alt={show.title} 
+                src={initialShow.image} 
+                alt={initialShow.title} 
                 className="w-64 h-64 object-cover rounded-lg shadow-lg transform hover:scale-105 transition-transform duration-300"
               />
               <div className="flex-1">
                 <h2 className="text-2xl font-semibold mb-4">About the Show</h2>
-                <p className="text-gray-300 mb-4">{show.description}</p>
+                <p className="text-gray-300 mb-4">{initialShow.description}</p>
                 <div className="flex items-center space-x-4 mb-4">
                   <span className="bg-purple-800 text-purple-200 px-3 py-1 rounded-full text-sm">
                     Podcast
                   </span>
                   <span className="flex items-center text-gray-300">
                     <Headphones className="h-5 w-5 mr-2" />
-                    {show.total_episodes} episodes
+                    {initialShow.total_episodes} episodes
                   </span>
                 </div>
                 <div className="flex space-x-4">
@@ -130,7 +143,7 @@ export default function PodcastShowDetails({ initialShow }: { initialShow: Podca
         {/* Episodes Section */}
         <Suspense fallback={<div className="text-white">Loading episodes...</div>}>
           <EpisodeList 
-            episodes={show.episodes} 
+            episodes={initialShow.episodes} 
             onEpisodeClick={(episode) => {
               setCurrentEpisode(episode);
               setIsPlaying(true);
