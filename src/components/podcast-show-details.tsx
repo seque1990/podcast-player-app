@@ -21,6 +21,7 @@ type PodcastShow = {
   image: string;
   total_episodes: number;
   listennotes_url: string;
+  genre_ids?: number[]; // Add this line
 };
 
 type PodcastEpisode = {
@@ -98,7 +99,7 @@ export default function PodcastShowDetails({ initialShow }: { initialShow: Podca
       setIsLoading(false);
     }
   };
-  
+
   const filteredEpisodes = episodes.filter(episode =>
     episode.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
     episode.description.toLowerCase().includes(searchTerm.toLowerCase())
@@ -221,7 +222,7 @@ export default function PodcastShowDetails({ initialShow }: { initialShow: Podca
                 <h2 className="text-2xl font-semibold mb-4">About the Show</h2>
                 <p className="text-gray-300 mb-4">{show.description}</p>
                 <div className="flex items-center space-x-4 mb-4">
-                  {('genre_ids' in show && show.genre_ids && show.genre_ids.length > 0) ? (
+                  {show.genre_ids && show.genre_ids.length > 0 ? (
                     <span className="bg-purple-800 text-purple-200 px-3 py-1 rounded-full text-sm">
                       {show.genre_ids[0]} {/* You might want to map this to actual genre names */}
                     </span>
