@@ -2,27 +2,37 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import PodcastLayout from './podcast-layout';
 import { getFallbackPodcasts } from '@/utils/fallbackPodcasts';
 import { ParsedFeed } from '@/utils/rssFeedParser';
 
 type PodcastShow = ParsedFeed;
 
-export default function PodcastShowsList() {
-  const [podcastShows, setPodcastShows] = useState<PodcastShow[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+const INITIAL_BATCH_SIZE = 8;
+
+// Custom loader function
+const imageLoader = ({ src }: { src: string }) => {
+  return src;
+};
+
+export default function PodcastShowsList({ initialPodcasts }: { initialPodcasts: PodcastShow[] }) {
+  const [podcastShows, setPodcastShows] = useState<PodcastShow[]>(initialPodcasts);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    loadFallbackPodcasts();
-  }, []);
+    if (podcastShows.length === INITIAL_BATCH_SIZE) {
+      loadRemainingPodcasts();
+    }
+  }, [podcastShows.length]);
 
-  const loadFallbackPodcasts = async () => {
+  const loadRemainingPodcasts = async () => {
     setIsLoading(true);
     try {
-      const fallbackPodcasts = await getFallbackPodcasts();
-      setPodcastShows(fallbackPodcasts);
+      const allPodcasts = await getFallbackPodcasts();
+      setPodcastShows(allPodcasts);
     } catch (error) {
-      console.error('Error loading fallback podcasts:', error);
+      console.error('Error loading remaining podcasts:', error);
     } finally {
       setIsLoading(false);
     }
@@ -42,13 +52,20 @@ export default function PodcastShowsList() {
     >
       <div className="p-8">
         <h1 className="text-3xl font-bold mb-6">Popular Podcasts</h1>
-        {isLoading && <p>Loading podcasts...</p>}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {podcastShows.map((podcast) => (
             <Link href={`/podcast/${podcast.id}`} key={podcast.id}>
               <div className="bg-gray-800 rounded-lg overflow-hidden hover:bg-gray-700 transition-colors cursor-pointer">
                 <div className="aspect-square relative">
-                  <img src={podcast.image} alt={podcast.title} className="w-full h-full object-cover" />
+                  <Image 
+                    loader={imageLoader}
+                    src={podcast.image} 
+                    alt={podcast.title} 
+                    layout="fill"
+                    objectFit="cover"
+                    loading="lazy"
+                    unoptimized
+                  />
                   <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent p-4">
                     <h3 className="font-semibold text-lg text-white">{podcast.title}</h3>
                     <p className="text-gray-300 text-sm">{podcast.total_episodes} episodes</p>
@@ -58,6 +75,7 @@ export default function PodcastShowsList() {
             </Link>
           ))}
         </div>
+        {isLoading && <p className="text-center mt-4">Loading more podcasts...</p>}
       </div>
     </PodcastLayout>
   );
