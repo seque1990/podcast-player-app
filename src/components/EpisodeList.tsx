@@ -3,21 +3,43 @@
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Play, Clock, Calendar, Search } from 'lucide-react'
-import { ParsedEpisode } from '@/utils/rssFeedParser';
+import { Play, Clock, Calendar, Search, ChevronDown, ChevronUp } from 'lucide-react'
+
+type SimplifiedPodcastEpisode = {
+  id: string;
+  title: string;
+  description: string;
+  pub_date_ms: number;
+  audio_length_sec: number;
+  audio: string;
+  thumbnail: string;
+};
 
 type EpisodeListProps = {
-  episodes: ParsedEpisode[];
-  onEpisodeClick: (episode: ParsedEpisode) => void;
+  episodes: SimplifiedPodcastEpisode[];
+  onEpisodeClick: (episode: SimplifiedPodcastEpisode) => void;
 };
 
 export default function EpisodeList({ episodes, onEpisodeClick }: EpisodeListProps) {
   const [searchTerm, setSearchTerm] = useState("");
+  const [expandedEpisodes, setExpandedEpisodes] = useState<Set<string>>(new Set());
 
   const filteredEpisodes = episodes.filter(episode =>
     episode.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
     episode.description.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const toggleExpanded = (episodeId: string) => {
+    setExpandedEpisodes(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(episodeId)) {
+        newSet.delete(episodeId);
+      } else {
+        newSet.add(episodeId);
+      }
+      return newSet;
+    });
+  };
 
   const formatTime = (timeInSeconds: number | null): string => {
     if (timeInSeconds === null || isNaN(timeInSeconds)) {
@@ -33,12 +55,6 @@ export default function EpisodeList({ episodes, onEpisodeClick }: EpisodeListPro
     } else {
       return `${minutes}:${seconds.toString().padStart(2, '0')}`;
     }
-  };
-
-  const sanitizeHTML = (html: string) => {
-    return {
-      __html: html
-    };
   };
 
   return (
@@ -61,23 +77,38 @@ export default function EpisodeList({ episodes, onEpisodeClick }: EpisodeListPro
           {filteredEpisodes.map((episode) => (
             <div 
               key={episode.id} 
-              className="bg-gray-800 bg-opacity-50 backdrop-blur-lg rounded-lg p-6 hover:bg-opacity-70 transition-all duration-300 transform hover:scale-102 cursor-pointer"
-              onClick={() => onEpisodeClick(episode)}
+              className="bg-gray-800 bg-opacity-50 backdrop-blur-lg rounded-lg p-6 hover:bg-opacity-70 transition-all duration-300"
             >
               <div className="flex flex-col md:flex-row gap-4">
                 <img src={episode.thumbnail} alt={episode.title} className="w-full md:w-48 h-48 object-cover rounded-lg" />
                 <div className="flex-1">
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="text-xl font-semibold">{episode.title}</h3>
-                    <Button variant="ghost" size="icon" className="text-purple-400 hover:text-purple-300 hover:bg-purple-900/50">
+                    <Button variant="ghost" size="icon" className="text-purple-400 hover:text-purple-300 hover:bg-purple-900/50" onClick={() => onEpisodeClick(episode)}>
                       <Play className="h-6 w-6" />
                     </Button>
                   </div>
                   <div 
-                    className="text-gray-300 mb-4 prose prose-invert max-w-none"
-                    dangerouslySetInnerHTML={sanitizeHTML(episode.description)}
+                    className={`text-gray-300 mb-4 prose prose-invert max-w-none ${
+                      expandedEpisodes.has(episode.id) ? '' : 'line-clamp-3'
+                    }`}
+                    dangerouslySetInnerHTML={{ __html: episode.description }}
                   />
-                  <div className="flex items-center text-sm text-gray-400">
+                  {episode.description.length > 150 && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-purple-400 hover:text-purple-300 p-0 h-auto font-normal"
+                      onClick={() => toggleExpanded(episode.id)}
+                    >
+                      {expandedEpisodes.has(episode.id) ? (
+                        <>Read less <ChevronUp className="ml-1 h-4 w-4" /></>
+                      ) : (
+                        <>Read more <ChevronDown className="ml-1 h-4 w-4" /></>
+                      )}
+                    </Button>
+                  )}
+                  <div className="flex items-center text-sm text-gray-400 mt-2">
                     <Clock className="h-4 w-4 mr-2" />
                     <span className="mr-4">{formatTime(episode.audio_length_sec)}</span>
                     <Calendar className="h-4 w-4 mr-2" />
