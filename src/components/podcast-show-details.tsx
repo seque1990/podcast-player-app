@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
-import Link from 'next/link';
 import PodcastLayout from './podcast-layout';
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -10,6 +9,7 @@ import { Play, Pause, SkipBack, SkipForward, Clock, Calendar, Search, Volume2, H
 import { createPodcastClient } from '@/utils/podcastApiUtils';
 import { getFallbackPodcastById } from '@/utils/fallbackPodcasts';
 import { ParsedFeed } from '@/utils/rssFeedParser';
+import { getFallbackMode } from '@/utils/fallbackModeUtils';
 
 const client = createPodcastClient();
 
@@ -41,8 +41,7 @@ function isApiError(error: unknown): error is { response?: { status?: number } }
 
 export default function PodcastShowDetails({ initialShow }: { initialShow: PodcastShow }) {
   const searchParams = useSearchParams();
-  const usingFallback = searchParams.get('fallback') === 'true';
-
+  const usingFallback = getFallbackMode() || searchParams.get('fallback') === 'true';
   const [show, setShow] = useState<PodcastShow>(initialShow);
   const [currentEpisode, setCurrentEpisode] = useState<PodcastEpisode | null>(null);
   const [searchTerm, setSearchTerm] = useState("")

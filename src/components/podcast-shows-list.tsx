@@ -6,12 +6,12 @@ import PodcastLayout from './podcast-layout';
 import { createPodcastClient } from '@/utils/podcastApiUtils';
 import { getFallbackPodcasts } from '@/utils/fallbackPodcasts';
 import { ParsedFeed } from '@/utils/rssFeedParser';
+import { setFallbackMode, getFallbackMode, clearFallbackMode } from '@/utils/fallbackModeUtils';
 
 type PodcastShow = ParsedFeed;
 
 const client = createPodcastClient();
 
-// Type guard for API error
 function isApiError(error: unknown): error is { response?: { status?: number } } {
   return typeof error === 'object' && error !== null && 'response' in error;
 }
@@ -20,7 +20,7 @@ export default function PodcastShowsList() {
   const [podcastShows, setPodcastShows] = useState<PodcastShow[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [usingFallback, setUsingFallback] = useState(false);
+  const [usingFallback, setUsingFallback] = useState(getFallbackMode);
 
   useEffect(() => {
     fetchPodcastShows();
@@ -29,12 +29,21 @@ export default function PodcastShowsList() {
   const fetchPodcastShows = async () => {
     setIsLoading(true);
     setError(null);
+
+    if (usingFallback) {
+      const fallbackPodcasts = await getFallbackPodcasts();
+      setPodcastShows(fallbackPodcasts);
+      setIsLoading(false);
+      return;
+    }
+
     try {
       const response = await client.fetchBestPodcasts({
         region: 'us',
         safe_mode: 1,
       });
       setPodcastShows(response.data.podcasts);
+      clearFallbackMode();
       setUsingFallback(false);
     } catch (error) {
       console.error('Error fetching podcasts:', error);
@@ -42,6 +51,7 @@ export default function PodcastShowsList() {
         console.log('Rate limit reached. Using fallback data.');
         const fallbackPodcasts = await getFallbackPodcasts();
         setPodcastShows(fallbackPodcasts);
+        setFallbackMode(true);
         setUsingFallback(true);
       } else {
         setError('Failed to fetch podcasts. Please try again later.');
