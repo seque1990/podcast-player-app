@@ -1,47 +1,17 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { useSearchParams } from 'next/navigation';
 import PodcastLayout from './podcast-layout';
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Play, Pause, SkipBack, SkipForward, Clock, Calendar, Search, Volume2, Headphones, Share2 } from 'lucide-react'
-import { createPodcastClient } from '@/utils/podcastApiUtils';
 import { getFallbackPodcastById } from '@/utils/fallbackPodcasts';
-import { ParsedFeed } from '@/utils/rssFeedParser';
-import { getFallbackMode } from '@/utils/fallbackModeUtils';
+import { ParsedFeed, ParsedEpisode } from '@/utils/rssFeedParser';
 
-const client = createPodcastClient();
-
-type PodcastShow = {
-  id: string;
-  title: string;
-  publisher: string;
-  description: string;
-  image: string;
-  total_episodes: number;
-  listennotes_url: string;
-  genre_ids?: number[]; // Add this line
-};
-
-type PodcastEpisode = {
-  id: string;
-  title: string;
-  description: string;
-  pub_date_ms: number;
-  audio_length_sec: number;
-  audio: string;
-  thumbnail?: string;
-  image?: string;
-};
-
-function isApiError(error: unknown): error is { response?: { status?: number } } {
-  return typeof error === 'object' && error !== null && 'response' in error;
-}
+type PodcastShow = ParsedFeed;
+type PodcastEpisode = ParsedEpisode;
 
 export default function PodcastShowDetails({ initialShow }: { initialShow: PodcastShow }) {
-  const searchParams = useSearchParams();
-  const usingFallback = getFallbackMode() || searchParams.get('fallback') === 'true';
   const [show, setShow] = useState<PodcastShow>(initialShow);
   const [currentEpisode, setCurrentEpisode] = useState<PodcastEpisode | null>(null);
   const [searchTerm, setSearchTerm] = useState("")
@@ -58,41 +28,21 @@ export default function PodcastShowDetails({ initialShow }: { initialShow: Podca
 
   useEffect(() => {
     fetchPodcastAndEpisodes();
-  }, [show.id, usingFallback]);
+  }, [show.id]);
 
   const fetchPodcastAndEpisodes = async () => {
-    if (usingFallback) {
-      try {
-        const fallbackPodcast = await getFallbackPodcastById(show.id);
-        if (fallbackPodcast) {
-          setShow(fallbackPodcast);
-          setEpisodes(fallbackPodcast.episodes || []);
-        } else {
-          setError('Failed to fetch fallback podcast data.');
-        }
-      } catch (error) {
-        console.error('Error fetching fallback podcast:', error);
-        setError('Failed to fetch podcast data. Please try again later.');
-      }
-      return;
-    }
-
     setIsLoading(true);
     setError(null);
     try {
-      const response = await client.fetchPodcastById({
-        id: show.id,
-        sort: 'recent_first'
-      });
-      if (response.data) {
-        setShow(response.data);
-        setEpisodes(response.data.episodes || []);
+      const fallbackPodcast = await getFallbackPodcastById(show.id);
+      if (fallbackPodcast) {
+        setShow(fallbackPodcast);
+        setEpisodes(fallbackPodcast.episodes || []);
       } else {
-        console.error('Unexpected response structure:', response);
-        setError('Failed to fetch podcast data. Please try again later.');
+        setError('Failed to fetch podcast data.');
       }
     } catch (error) {
-      console.error('Error fetching podcast and episodes:', error);
+      console.error('Error fetching podcast:', error);
       setError('Failed to fetch podcast data. Please try again later.');
     } finally {
       setIsLoading(false);
@@ -221,15 +171,9 @@ export default function PodcastShowDetails({ initialShow }: { initialShow: Podca
                 <h2 className="text-2xl font-semibold mb-4">About the Show</h2>
                 <p className="text-gray-300 mb-4">{show.description}</p>
                 <div className="flex items-center space-x-4 mb-4">
-                  {show.genre_ids && show.genre_ids.length > 0 ? (
-                    <span className="bg-purple-800 text-purple-200 px-3 py-1 rounded-full text-sm">
-                      {show.genre_ids[0]} {/* You might want to map this to actual genre names */}
-                    </span>
-                  ) : (
-                    <span className="bg-purple-800 text-purple-200 px-3 py-1 rounded-full text-sm">
-                      Podcast
-                    </span>
-                  )}
+                  <span className="bg-purple-800 text-purple-200 px-3 py-1 rounded-full text-sm">
+                    Podcast
+                  </span>
                   <span className="flex items-center text-gray-300">
                     <Headphones className="h-5 w-5 mr-2" />
                     {show.total_episodes} episodes
@@ -280,7 +224,8 @@ export default function PodcastShowDetails({ initialShow }: { initialShow: Podca
                       <div 
                         className="text-gray-300 mb-4 prose prose-invert max-w-none"
                         dangerouslySetInnerHTML={sanitizeHTML(episode.description)}
-                      />                      <div className="flex items-center text-sm text-gray-400">
+                      />
+                      <div className="flex items-center text-sm text-gray-400">
                         <Clock className="h-4 w-4 mr-2" />
                         <span className="mr-4">{formatTime(episode.audio_length_sec)}</span>
                         <Calendar className="h-4 w-4 mr-2" />
@@ -295,5 +240,5 @@ export default function PodcastShowDetails({ initialShow }: { initialShow: Podca
         </section>
       </div>
     </PodcastLayout>
-  )
+  );
 }

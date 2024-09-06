@@ -3,59 +3,26 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import PodcastLayout from './podcast-layout';
-import { createPodcastClient } from '@/utils/podcastApiUtils';
 import { getFallbackPodcasts } from '@/utils/fallbackPodcasts';
 import { ParsedFeed } from '@/utils/rssFeedParser';
-import { setFallbackMode, getFallbackMode, clearFallbackMode } from '@/utils/fallbackModeUtils';
 
 type PodcastShow = ParsedFeed;
 
-const client = createPodcastClient();
-
-function isApiError(error: unknown): error is { response?: { status?: number } } {
-  return typeof error === 'object' && error !== null && 'response' in error;
-}
-
 export default function PodcastShowsList() {
   const [podcastShows, setPodcastShows] = useState<PodcastShow[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [usingFallback, setUsingFallback] = useState(getFallbackMode);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    fetchPodcastShows();
+    loadFallbackPodcasts();
   }, []);
 
-  const fetchPodcastShows = async () => {
+  const loadFallbackPodcasts = async () => {
     setIsLoading(true);
-    setError(null);
-
-    if (usingFallback) {
+    try {
       const fallbackPodcasts = await getFallbackPodcasts();
       setPodcastShows(fallbackPodcasts);
-      setIsLoading(false);
-      return;
-    }
-
-    try {
-      const response = await client.fetchBestPodcasts({
-        region: 'us',
-        safe_mode: 1,
-      });
-      setPodcastShows(response.data.podcasts);
-      clearFallbackMode();
-      setUsingFallback(false);
     } catch (error) {
-      console.error('Error fetching podcasts:', error);
-      if (isApiError(error) && error.response?.status === 429) {
-        console.log('Rate limit reached. Using fallback data.');
-        const fallbackPodcasts = await getFallbackPodcasts();
-        setPodcastShows(fallbackPodcasts);
-        setFallbackMode(true);
-        setUsingFallback(true);
-      } else {
-        setError('Failed to fetch podcasts. Please try again later.');
-      }
+      console.error('Error loading fallback podcasts:', error);
     } finally {
       setIsLoading(false);
     }
@@ -76,10 +43,9 @@ export default function PodcastShowsList() {
       <div className="p-8">
         <h1 className="text-3xl font-bold mb-6">Popular Podcasts</h1>
         {isLoading && <p>Loading podcasts...</p>}
-        {error && <p className="text-red-500">{error}</p>}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {podcastShows.map((podcast) => (
-            <Link href={`/podcast/${podcast.id}?fallback=${usingFallback}`} key={podcast.id}>
+            <Link href={`/podcast/${podcast.id}`} key={podcast.id}>
               <div className="bg-gray-800 rounded-lg overflow-hidden hover:bg-gray-700 transition-colors cursor-pointer">
                 <div className="aspect-square relative">
                   <img src={podcast.image} alt={podcast.title} className="w-full h-full object-cover" />
