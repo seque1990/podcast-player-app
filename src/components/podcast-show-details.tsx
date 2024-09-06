@@ -1,19 +1,28 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 import PodcastLayout from './podcast-layout';
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Play, Pause, SkipBack, SkipForward, Clock, Calendar, Search, Volume2, Headphones, Share2 } from 'lucide-react'
-import { PodcastShow as ApiPodcastShow } from 'podcast-api';
 import { createPodcastClient } from '@/utils/podcastApiUtils';
 import { getFallbackPodcastById } from '@/utils/fallbackPodcasts';
-import { ParsedFeed, ParsedEpisode } from '@/utils/rssFeedParser';
+import { ParsedFeed } from '@/utils/rssFeedParser';
 
 const client = createPodcastClient();
 
-type PodcastShow = ApiPodcastShow | ParsedFeed;
+type PodcastShow = {
+  id: string;
+  title: string;
+  publisher: string;
+  description: string;
+  image: string;
+  total_episodes: number;
+  listennotes_url: string;
+};
+
 type PodcastEpisode = {
   id: string;
   title: string;
@@ -24,6 +33,10 @@ type PodcastEpisode = {
   thumbnail?: string;
   image?: string;
 };
+
+function isApiError(error: unknown): error is { response?: { status?: number } } {
+  return typeof error === 'object' && error !== null && 'response' in error;
+}
 
 export default function PodcastShowDetails({ initialShow }: { initialShow: PodcastShow }) {
   const searchParams = useSearchParams();
@@ -39,18 +52,33 @@ export default function PodcastShowDetails({ initialShow }: { initialShow: Podca
   const [currentTime, setCurrentTime] = useState(0)
   const [duration, setDuration] = useState<number | null>(null)
   const [isSubscribed, setIsSubscribed] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const audioRef = useRef<HTMLAudioElement>(null)
 
   useEffect(() => {
-    if (usingFallback) {
-      setEpisodes(show.episodes || []);
-    } else {
-      fetchPodcastAndEpisodes();
-    }
+    fetchPodcastAndEpisodes();
   }, [show.id, usingFallback]);
 
   const fetchPodcastAndEpisodes = async () => {
-    if (usingFallback) return;
+    if (usingFallback) {
+      try {
+        const fallbackPodcast = await getFallbackPodcastById(show.id);
+        if (fallbackPodcast) {
+          setShow(fallbackPodcast);
+          setEpisodes(fallbackPodcast.episodes || []);
+        } else {
+          setError('Failed to fetch fallback podcast data.');
+        }
+      } catch (error) {
+        console.error('Error fetching fallback podcast:', error);
+        setError('Failed to fetch podcast data. Please try again later.');
+      }
+      return;
+    }
+
+    setIsLoading(true);
+    setError(null);
     try {
       const response = await client.fetchPodcastById({
         id: show.id,
@@ -61,12 +89,16 @@ export default function PodcastShowDetails({ initialShow }: { initialShow: Podca
         setEpisodes(response.data.episodes || []);
       } else {
         console.error('Unexpected response structure:', response);
+        setError('Failed to fetch podcast data. Please try again later.');
       }
     } catch (error) {
       console.error('Error fetching podcast and episodes:', error);
+      setError('Failed to fetch podcast data. Please try again later.');
+    } finally {
+      setIsLoading(false);
     }
   };
-
+  
   const filteredEpisodes = episodes.filter(episode =>
     episode.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
     episode.description.toLowerCase().includes(searchTerm.toLowerCase())
