@@ -48,7 +48,7 @@ export default function PodcastShowDetails({ initialShow }: { initialShow: Podca
   const [searchTerm, setSearchTerm] = useState("")
   const [isPlaying, setIsPlaying] = useState(false)
   const [progress, setProgress] = useState(0)
-  const [episodes, setEpisodes] = useState<PodcastEpisode[]>([]);
+  const [episodes, setEpisodes] = useState<PodcastEpisode[]>(initialShow.episodes || []);
   const [volume, setVolume] = useState(75)
   const [currentTime, setCurrentTime] = useState(0)
   const [duration, setDuration] = useState<number | null>(null)
@@ -58,7 +58,9 @@ export default function PodcastShowDetails({ initialShow }: { initialShow: Podca
   const audioRef = useRef<HTMLAudioElement>(null)
 
   useEffect(() => {
-    fetchPodcastAndEpisodes();
+    if (!usingFallback) {
+      fetchPodcastAndEpisodes();
+    }
   }, [show.id, usingFallback]);
 
   const fetchPodcastAndEpisodes = async () => {

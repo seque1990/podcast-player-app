@@ -24,6 +24,8 @@ export default function PodcastShowsList() {
 
   useEffect(() => {
     fetchPodcastShows();
+    // Preload fallback data
+    getFallbackPodcasts();
   }, []);
 
   const fetchPodcastShows = async () => {
