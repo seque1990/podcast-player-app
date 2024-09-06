@@ -11,6 +11,11 @@ type PodcastShow = ParsedFeed;
 
 const client = createPodcastClient();
 
+// Type guard for API error
+function isApiError(error: unknown): error is { response?: { status?: number } } {
+  return typeof error === 'object' && error !== null && 'response' in error;
+}
+
 export default function PodcastShowsList() {
   const [podcastShows, setPodcastShows] = useState<PodcastShow[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -33,7 +38,7 @@ export default function PodcastShowsList() {
       setUsingFallback(false);
     } catch (error) {
       console.error('Error fetching podcasts:', error);
-      if (error.response && error.response.status === 429) {
+      if (isApiError(error) && error.response?.status === 429) {
         console.log('Rate limit reached. Using fallback data.');
         const fallbackPodcasts = await getFallbackPodcasts();
         setPodcastShows(fallbackPodcasts);
