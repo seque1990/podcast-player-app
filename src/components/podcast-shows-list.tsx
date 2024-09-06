@@ -3,18 +3,11 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import PodcastLayout from './podcast-layout';
-import { Client } from 'podcast-api';
 import { createPodcastClient } from '@/utils/podcastApiUtils';
+import { getFallbackPodcasts } from '@/utils/fallbackPodcasts';
+import { ParsedFeed } from '@/utils/rssFeedParser';
 
-type PodcastShow = {
-  id: string;
-  title: string;
-  publisher: string;
-  description: string;
-  image: string;
-  total_episodes: number;
-  listennotes_url: string;
-};
+type PodcastShow = ParsedFeed;
 
 const client = createPodcastClient();
 
@@ -38,7 +31,13 @@ export default function PodcastShowsList() {
       setPodcastShows(response.data.podcasts);
     } catch (error) {
       console.error('Error fetching podcasts:', error);
-      setError('Failed to fetch podcasts. Please try again later.');
+      if (error.response && error.response.status === 429) {
+        console.log('Rate limit reached. Using fallback data.');
+        const fallbackPodcasts = await getFallbackPodcasts();
+        setPodcastShows(fallbackPodcasts);
+      } else {
+        setError('Failed to fetch podcasts. Please try again later.');
+      }
     } finally {
       setIsLoading(false);
     }
