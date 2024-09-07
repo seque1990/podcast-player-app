@@ -77,14 +77,23 @@ export default function EpisodeList({ episodes, onEpisodeClick }: EpisodeListPro
           {filteredEpisodes.map((episode) => (
             <div 
               key={episode.id} 
-              className="bg-gray-800 bg-opacity-50 backdrop-blur-lg rounded-lg p-6 hover:bg-opacity-70 transition-all duration-300"
+              className="bg-gray-800 bg-opacity-50 backdrop-blur-lg rounded-lg p-6 hover:bg-opacity-70 transition-all duration-300 cursor-pointer"
+              onClick={() => onEpisodeClick(episode)}
             >
               <div className="flex flex-col md:flex-row gap-4">
                 <img src={episode.thumbnail} alt={episode.title} className="w-full md:w-48 h-48 object-cover rounded-lg" />
                 <div className="flex-1">
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="text-xl font-semibold">{episode.title}</h3>
-                    <Button variant="ghost" size="icon" className="text-purple-400 hover:text-purple-300 hover:bg-purple-900/50" onClick={() => onEpisodeClick(episode)}>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="text-purple-400 hover:text-purple-300 hover:bg-purple-900/50"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onEpisodeClick(episode);
+                      }}
+                    >
                       <Play className="h-6 w-6" />
                     </Button>
                   </div>
@@ -99,7 +108,10 @@ export default function EpisodeList({ episodes, onEpisodeClick }: EpisodeListPro
                       variant="ghost"
                       size="sm"
                       className="text-purple-400 hover:text-purple-300 p-0 h-auto font-normal"
-                      onClick={() => toggleExpanded(episode.id)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleExpanded(episode.id);
+                      }}
                     >
                       {expandedEpisodes.has(episode.id) ? (
                         <>Read less <ChevronUp className="ml-1 h-4 w-4" /></>

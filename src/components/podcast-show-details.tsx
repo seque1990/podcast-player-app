@@ -47,6 +47,15 @@ export default function PodcastShowDetails({ initialShow }: { initialShow: Simpl
     }
   };
 
+  const handleEpisodeClick = (episode: SimplifiedPodcastEpisode) => {
+    setCurrentEpisode(episode);
+    setIsPlaying(true);
+    if (audioRef.current) {
+      audioRef.current.src = episode.audio;
+      audioRef.current.play();
+    }
+  };
+
   const handleTimeUpdate = () => {
     if (audioRef.current) {
       const currentTime = audioRef.current.currentTime;
