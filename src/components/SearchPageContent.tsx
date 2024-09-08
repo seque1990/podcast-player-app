@@ -6,22 +6,13 @@ import { useState, useEffect } from 'react'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Search, Mic, Headphones, TrendingUp, Music, Book, Film, Coffee, Star, Clock } from 'lucide-react'
+import { Search, Headphones } from 'lucide-react'
 import PodcastLayout from '@/components/podcast-layout'
 import { getFallbackPodcasts } from '@/utils/fallbackPodcasts'
 import { ParsedFeed } from '@/utils/rssFeedParser'
 
-const categories = [
-  { id: 1, name: "Technology", icon: <Mic className="h-6 w-6" /> },
-  { id: 2, name: "Business", icon: <TrendingUp className="h-6 w-6" /> },
-  { id: 3, name: "Science", icon: <Book className="h-6 w-6" /> },
-  { id: 4, name: "Entertainment", icon: <Film className="h-6 w-6" /> },
-  { id: 5, name: "News", icon: <Coffee className="h-6 w-6" /> },
-]
-
 export default function SearchPageContent() {
   const [searchTerm, setSearchTerm] = useState("")
-  const [activeCategory, setActiveCategory] = useState("All")
   const [podcasts, setPodcasts] = useState<ParsedFeed[]>([])
   const [isLoading, setIsLoading] = useState(true)
 
@@ -41,9 +32,8 @@ export default function SearchPageContent() {
   }, [])
 
   const filteredPodcasts = podcasts.filter(podcast =>
-    (podcast.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    podcast.description.toLowerCase().includes(searchTerm.toLowerCase())) &&
-    (activeCategory === "All" || podcast.categories?.includes(activeCategory))
+    podcast.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    podcast.description.toLowerCase().includes(searchTerm.toLowerCase())
   )
 
   return (
@@ -81,19 +71,6 @@ export default function SearchPageContent() {
                 <TabsTrigger value="grid" className="data-[state=active]:bg-purple-600">Grid View</TabsTrigger>
                 <TabsTrigger value="list" className="data-[state=active]:bg-purple-600">List View</TabsTrigger>
               </TabsList>
-              <div className="flex space-x-2">
-                {["All", ...categories.map(c => c.name)].map((cat) => (
-                  <Button
-                    key={cat}
-                    variant={activeCategory === cat ? "secondary" : "ghost"}
-                    size="sm"
-                    onClick={() => setActiveCategory(cat)}
-                    className={`px-3 py-1 rounded-full ${activeCategory === cat ? 'bg-purple-600 text-white' : 'text-gray-300 hover:text-white'}`}
-                  >
-                    {cat}
-                  </Button>
-                ))}
-              </div>
             </div>
 
             {isLoading ? (
