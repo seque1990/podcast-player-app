@@ -61,8 +61,8 @@ export default function PodcastShowsList({ initialPodcasts }: { initialPodcasts:
                     loader={imageLoader}
                     src={podcast.image} 
                     alt={podcast.title} 
-                    layout="fill"
-                    objectFit="cover"
+                    fill
+                    style={{ objectFit: 'cover' }}
                     loading="lazy"
                     unoptimized
                   />
