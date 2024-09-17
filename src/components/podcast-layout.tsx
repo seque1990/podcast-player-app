@@ -66,9 +66,11 @@ export default function PodcastLayout({
                 <Search className="mr-2 h-5 w-5" /> Search
               </Button>
             </Link>
-            <Button variant="ghost" className="w-full justify-start text-lg font-semibold">
-              <Library className="mr-2 h-5 w-5" /> Your Library
-            </Button>
+            <Link href="/library">
+              <Button variant="ghost" className={`w-full justify-start text-lg font-semibold ${pathname === '/library' ? 'bg-gray-800' : ''}`}>
+                <Library className="mr-2 h-5 w-5" /> Your Library
+              </Button>
+            </Link>
           </div>
         </nav>
 
