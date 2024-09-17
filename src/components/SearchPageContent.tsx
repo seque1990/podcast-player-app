@@ -122,13 +122,12 @@ export default function SearchPageContent() {
                     ))}
                   </div>
                 </TabsContent>
-
                 <TabsContent value="list" className="mt-0">
-                  <div className="space-y-6">
+                  <div>
                     {filteredPodcasts.map((podcast) => (
+                      <Link href={`/podcast/${podcast.id}`} key={podcast.id}>
                       <div 
-                        key={podcast.id} 
-                        className="bg-gray-800 bg-opacity-50 backdrop-blur-lg rounded-lg p-6 hover:bg-opacity-70 transition-all duration-300 cursor-pointer"
+                        className="bg-gray-800 bg-opacity-50 backdrop-blur-lg rounded-lg p-6 hover:bg-opacity-70 transition-all duration-300 cursor-pointer mb-6" // Added mb-6 for bottom margin
                       >
                         <div className="flex flex-col md:flex-row gap-4">
                           <div className="w-full md:w-48 h-48 relative flex-shrink-0">
@@ -146,15 +145,18 @@ export default function SearchPageContent() {
                           <div className="flex-1">
                             <div className="flex items-center justify-between mb-4">
                               <h3 className="text-xl font-semibold">{podcast.title}</h3>
-                              <Link href={`/podcast/${podcast.id}`}>
-                                <Button 
-                                  variant="ghost" 
-                                  size="sm" 
-                                  className="text-purple-400 hover:text-purple-300 hover:bg-purple-900/50"
-                                >
-                                  View Episodes
-                                </Button>
-                              </Link>
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                className="text-purple-400 hover:text-purple-300 hover:bg-purple-900/50"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  e.preventDefault();
+                                  // You can add additional action here if needed
+                                }}
+                              >
+                                View Episodes
+                              </Button>
                             </div>
                             <div 
                               className={`text-gray-300 mb-4 prose prose-invert max-w-none ${
@@ -167,7 +169,11 @@ export default function SearchPageContent() {
                                 variant="ghost"
                                 size="sm"
                                 className="text-purple-400 hover:text-purple-300 p-0 h-auto font-normal"
-                                onClick={() => toggleExpanded(podcast.id)}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  e.preventDefault();
+                                  toggleExpanded(podcast.id);
+                                }}
                               >
                                 {expandedShows.has(podcast.id) ? (
                                   <>Read less <ChevronUp className="ml-1 h-4 w-4" /></>
@@ -183,10 +189,10 @@ export default function SearchPageContent() {
                           </div>
                         </div>
                       </div>
+                    </Link>
                     ))}
                   </div>
-                </TabsContent>
-              </>
+                </TabsContent>              </>
             )}
           </Tabs>
         </div>
