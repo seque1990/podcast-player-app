@@ -24,8 +24,8 @@ const ListView: React.FC<ListViewProps> = ({ podcasts, imageLoader, expandedShow
                   loader={imageLoader}
                   src={podcast.image} 
                   alt={podcast.title} 
-                  layout="fill"
-                  objectFit="cover"
+                  fill
+                  style={{ objectFit: 'cover' }}
                   loading="lazy"
                   unoptimized
                   className="rounded-lg"

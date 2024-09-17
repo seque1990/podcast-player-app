@@ -19,8 +19,8 @@ const GridView: React.FC<GridViewProps> = ({ podcasts, imageLoader }) => {
                 loader={imageLoader}
                 src={podcast.image} 
                 alt={podcast.title} 
-                layout="fill"
-                objectFit="cover"
+                fill
+                style={{ objectFit: 'cover' }}
                 loading="lazy"
                 unoptimized
               />
