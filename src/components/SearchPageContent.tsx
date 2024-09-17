@@ -1,48 +1,72 @@
-// src/components/SearchPageContent.tsx
-
 'use client';
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Search, Headphones, ChevronDown, ChevronUp } from 'lucide-react'
+import dynamic from 'next/dynamic'
+import { debounce } from 'lodash'
 import PodcastLayout from '@/components/podcast-layout'
 import { getFallbackPodcasts } from '@/utils/fallbackPodcasts'
 import { ParsedFeed } from '@/utils/rssFeedParser'
 
-// Custom loader function
-const imageLoader = ({ src }: { src: string }) => {
-  return src;
-};
+const INITIAL_BATCH_SIZE = 8;
+const LOAD_MORE_SIZE = 16;
+
+const DynamicGridView = dynamic(() => import('@/components/GridView'))
+const DynamicListView = dynamic(() => import('@/components/ListView'))
+
+const imageLoader = ({ src }: { src: string }) => src;
 
 export default function SearchPageContent() {
   const [searchTerm, setSearchTerm] = useState("")
   const [podcasts, setPodcasts] = useState<ParsedFeed[]>([])
+  const [displayedPodcasts, setDisplayedPodcasts] = useState<ParsedFeed[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [expandedShows, setExpandedShows] = useState<Set<string>>(new Set());
+  const [hasMore, setHasMore] = useState(true)
+
+  const loadMorePodcasts = useCallback(() => {
+    const nextBatch = podcasts.slice(displayedPodcasts.length, displayedPodcasts.length + LOAD_MORE_SIZE)
+    setDisplayedPodcasts(prev => [...prev, ...nextBatch])
+    setHasMore(displayedPodcasts.length + nextBatch.length < podcasts.length)
+  }, [podcasts, displayedPodcasts])
 
   useEffect(() => {
-    async function loadPodcasts() {
+    async function loadInitialPodcasts() {
       setIsLoading(true)
       try {
-        const fallbackPodcasts = await getFallbackPodcasts()
-        setPodcasts(fallbackPodcasts)
+        const allPodcasts = await getFallbackPodcasts()
+        setPodcasts(allPodcasts)
+        setDisplayedPodcasts(allPodcasts.slice(0, INITIAL_BATCH_SIZE))
+        setHasMore(allPodcasts.length > INITIAL_BATCH_SIZE)
       } catch (error) {
         console.error('Error loading podcasts:', error)
       } finally {
         setIsLoading(false)
       }
     }
-    loadPodcasts()
+    loadInitialPodcasts()
   }, [])
 
-  const filteredPodcasts = podcasts.filter(podcast =>
-    podcast.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    podcast.description.toLowerCase().includes(searchTerm.toLowerCase())
+  const debouncedSearch = useCallback(
+    debounce((term: string) => {
+      const filtered = podcasts.filter(podcast =>
+        podcast.title.toLowerCase().includes(term.toLowerCase()) ||
+        podcast.description.toLowerCase().includes(term.toLowerCase())
+      )
+      setDisplayedPodcasts(filtered.slice(0, INITIAL_BATCH_SIZE))
+      setHasMore(filtered.length > INITIAL_BATCH_SIZE)
+    }, 300),
+    [podcasts]
   )
+
+  useEffect(() => {
+    debouncedSearch(searchTerm)
+  }, [searchTerm, debouncedSearch])
 
   const toggleExpanded = (showId: string) => {
     setExpandedShows(prev => {
@@ -72,7 +96,6 @@ export default function SearchPageContent() {
         <div className="container mx-auto px-4 py-8">
           <h1 className="text-4xl font-bold mb-8 text-center">Discover Your Next Favorite Podcast</h1>
 
-          {/* Search Bar */}
           <div className="max-w-3xl mx-auto mb-12 relative">
             <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" />
             <Input
@@ -84,7 +107,6 @@ export default function SearchPageContent() {
             />
           </div>
 
-          {/* Main Content */}
           <Tabs defaultValue="grid" className="w-full">
             <div className="flex justify-between items-center mb-8">
               <TabsList className="bg-gray-800">
@@ -98,101 +120,25 @@ export default function SearchPageContent() {
             ) : (
               <>
                 <TabsContent value="grid" className="mt-0">
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                    {filteredPodcasts.map((podcast) => (
-                      <Link href={`/podcast/${podcast.id}`} key={podcast.id}>
-                        <div className="bg-gray-800 rounded-lg overflow-hidden hover:bg-gray-700 transition-colors cursor-pointer">
-                          <div className="aspect-square relative">
-                            <Image 
-                              loader={imageLoader}
-                              src={podcast.image} 
-                              alt={podcast.title} 
-                              layout="fill"
-                              objectFit="cover"
-                              loading="lazy"
-                              unoptimized
-                            />
-                            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent p-4">
-                              <h3 className="font-semibold text-lg text-white">{podcast.title}</h3>
-                              <p className="text-gray-300 text-sm">{podcast.total_episodes} episodes</p>
-                            </div>
-                          </div>
-                        </div>
-                      </Link>
-                    ))}
-                  </div>
+                  <DynamicGridView podcasts={displayedPodcasts} imageLoader={imageLoader} />
                 </TabsContent>
                 <TabsContent value="list" className="mt-0">
-                  <div>
-                    {filteredPodcasts.map((podcast) => (
-                      <Link href={`/podcast/${podcast.id}`} key={podcast.id}>
-                      <div 
-                        className="bg-gray-800 bg-opacity-50 backdrop-blur-lg rounded-lg p-6 hover:bg-opacity-70 transition-all duration-300 cursor-pointer mb-6" // Added mb-6 for bottom margin
-                      >
-                        <div className="flex flex-col md:flex-row gap-4">
-                          <div className="w-full md:w-48 h-48 relative flex-shrink-0">
-                            <Image 
-                              loader={imageLoader}
-                              src={podcast.image} 
-                              alt={podcast.title} 
-                              layout="fill"
-                              objectFit="cover"
-                              loading="lazy"
-                              unoptimized
-                              className="rounded-lg"
-                            />
-                          </div>
-                          <div className="flex-1">
-                            <div className="flex items-center justify-between mb-4">
-                              <h3 className="text-xl font-semibold">{podcast.title}</h3>
-                              <Button 
-                                variant="ghost" 
-                                size="sm" 
-                                className="text-purple-400 hover:text-purple-300 hover:bg-purple-900/50"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  e.preventDefault();
-                                  // You can add additional action here if needed
-                                }}
-                              >
-                                View Episodes
-                              </Button>
-                            </div>
-                            <div 
-                              className={`text-gray-300 mb-4 prose prose-invert max-w-none ${
-                                expandedShows.has(podcast.id) ? '' : 'line-clamp-3'
-                              }`}
-                              dangerouslySetInnerHTML={{ __html: podcast.description }}
-                            />
-                            {podcast.description.length > 150 && (
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="text-purple-400 hover:text-purple-300 p-0 h-auto font-normal"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  e.preventDefault();
-                                  toggleExpanded(podcast.id);
-                                }}
-                              >
-                                {expandedShows.has(podcast.id) ? (
-                                  <>Read less <ChevronUp className="ml-1 h-4 w-4" /></>
-                                ) : (
-                                  <>Read more <ChevronDown className="ml-1 h-4 w-4" /></>
-                                )}
-                              </Button>
-                            )}
-                            <div className="flex items-center text-sm text-gray-400 mt-2">
-                              <Headphones className="h-4 w-4 mr-2" />
-                              <span className="mr-4">{podcast.total_episodes} episodes</span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </Link>
-                    ))}
-                  </div>
-                </TabsContent>              </>
+                  <DynamicListView 
+                    podcasts={displayedPodcasts} 
+                    imageLoader={imageLoader}
+                    expandedShows={expandedShows}
+                    toggleExpanded={toggleExpanded}
+                  />
+                </TabsContent>
+              </>
+            )}
+
+            {hasMore && !isLoading && (
+              <div className="text-center mt-8">
+                <Button onClick={loadMorePodcasts} variant="outline">
+                  Load More
+                </Button>
+              </div>
             )}
           </Tabs>
         </div>
