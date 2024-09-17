@@ -3,6 +3,8 @@
 'use client';
 
 import { useState, useEffect } from 'react'
+import Link from 'next/link'
+import Image from 'next/image'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -10,6 +12,11 @@ import { Search, Headphones } from 'lucide-react'
 import PodcastLayout from '@/components/podcast-layout'
 import { getFallbackPodcasts } from '@/utils/fallbackPodcasts'
 import { ParsedFeed } from '@/utils/rssFeedParser'
+
+// Custom loader function
+const imageLoader = ({ src }: { src: string }) => {
+  return src;
+};
 
 export default function SearchPageContent() {
   const [searchTerm, setSearchTerm] = useState("")
@@ -78,28 +85,27 @@ export default function SearchPageContent() {
             ) : (
               <>
                 <TabsContent value="grid" className="mt-0">
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                     {filteredPodcasts.map((podcast) => (
-                      <div key={podcast.id} className="bg-gray-800 rounded-lg overflow-hidden transition-all duration-300 hover:shadow-lg hover:shadow-purple-500/20 group">
-                        <div className="relative">
-                          <img src={podcast.image} alt={podcast.title} className="w-full h-48 object-cover" />
-                          <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                            <Button className="bg-purple-600 hover:bg-purple-700 text-white">
-                              Listen Now
-                            </Button>
+                      <Link href={`/podcast/${podcast.id}`} key={podcast.id}>
+                        <div className="bg-gray-800 rounded-lg overflow-hidden hover:bg-gray-700 transition-colors cursor-pointer">
+                          <div className="aspect-square relative">
+                            <Image 
+                              loader={imageLoader}
+                              src={podcast.image} 
+                              alt={podcast.title} 
+                              layout="fill"
+                              objectFit="cover"
+                              loading="lazy"
+                              unoptimized
+                            />
+                            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent p-4">
+                              <h3 className="font-semibold text-lg text-white">{podcast.title}</h3>
+                              <p className="text-gray-300 text-sm">{podcast.total_episodes} episodes</p>
+                            </div>
                           </div>
                         </div>
-                        <div className="p-4">
-                          <h3 className="text-xl font-semibold mb-2">{podcast.title}</h3>
-                          <p className="text-gray-300 mb-2 line-clamp-2">{podcast.description}</p>
-                          <div className="flex items-center justify-between text-sm text-gray-400">
-                            <span className="flex items-center">
-                              <Headphones className="h-4 w-4 mr-1" />
-                              {podcast.total_episodes} episodes
-                            </span>
-                          </div>
-                        </div>
-                      </div>
+                      </Link>
                     ))}
                   </div>
                 </TabsContent>
@@ -107,22 +113,31 @@ export default function SearchPageContent() {
                 <TabsContent value="list" className="mt-0">
                   <div className="space-y-4">
                     {filteredPodcasts.map((podcast) => (
-                      <div key={podcast.id} className="bg-gray-800 rounded-lg overflow-hidden flex items-center transition-all duration-300 hover:shadow-lg hover:shadow-purple-500/20">
-                        <img src={podcast.image} alt={podcast.title} className="w-24 h-24 object-cover" />
-                        <div className="flex-1 p-4">
-                          <h3 className="text-xl font-semibold mb-1">{podcast.title}</h3>
-                          <p className="text-gray-300 mb-2 line-clamp-2">{podcast.description}</p>
-                          <div className="flex items-center text-sm text-gray-400">
-                            <span className="flex items-center mr-4">
-                              <Headphones className="h-4 w-4 mr-1" />
-                              {podcast.total_episodes} episodes
-                            </span>
+                      <Link href={`/podcast/${podcast.id}`} key={podcast.id}>
+                        <div className="bg-gray-800 rounded-lg overflow-hidden flex items-center transition-all duration-300 hover:bg-gray-700">
+                          <div className="w-24 h-24 relative flex-shrink-0">
+                            <Image 
+                              loader={imageLoader}
+                              src={podcast.image} 
+                              alt={podcast.title} 
+                              layout="fill"
+                              objectFit="cover"
+                              loading="lazy"
+                              unoptimized
+                            />
+                          </div>
+                          <div className="flex-1 p-4">
+                            <h3 className="text-xl font-semibold mb-1">{podcast.title}</h3>
+                            <p className="text-gray-300 mb-2 line-clamp-2">{podcast.description}</p>
+                            <div className="flex items-center text-sm text-gray-400">
+                              <span className="flex items-center mr-4">
+                                <Headphones className="h-4 w-4 mr-1" />
+                                {podcast.total_episodes} episodes
+                              </span>
+                            </div>
                           </div>
                         </div>
-                        <Button className="bg-purple-600 hover:bg-purple-700 text-white m-4">
-                          Listen
-                        </Button>
-                      </div>
+                      </Link>
                     ))}
                   </div>
                 </TabsContent>
