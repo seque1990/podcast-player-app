@@ -8,7 +8,7 @@ import Image from 'next/image'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Search, Headphones } from 'lucide-react'
+import { Search, Headphones, ChevronDown, ChevronUp } from 'lucide-react'
 import PodcastLayout from '@/components/podcast-layout'
 import { getFallbackPodcasts } from '@/utils/fallbackPodcasts'
 import { ParsedFeed } from '@/utils/rssFeedParser'
@@ -22,6 +22,7 @@ export default function SearchPageContent() {
   const [searchTerm, setSearchTerm] = useState("")
   const [podcasts, setPodcasts] = useState<ParsedFeed[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [expandedShows, setExpandedShows] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     async function loadPodcasts() {
@@ -42,6 +43,18 @@ export default function SearchPageContent() {
     podcast.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
     podcast.description.toLowerCase().includes(searchTerm.toLowerCase())
   )
+
+  const toggleExpanded = (showId: string) => {
+    setExpandedShows(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(showId)) {
+        newSet.delete(showId);
+      } else {
+        newSet.add(showId);
+      }
+      return newSet;
+    });
+  };
 
   return (
     <PodcastLayout
@@ -111,11 +124,14 @@ export default function SearchPageContent() {
                 </TabsContent>
 
                 <TabsContent value="list" className="mt-0">
-                  <div className="space-y-4">
+                  <div className="space-y-6">
                     {filteredPodcasts.map((podcast) => (
-                      <Link href={`/podcast/${podcast.id}`} key={podcast.id}>
-                        <div className="bg-gray-800 rounded-lg overflow-hidden flex items-center transition-all duration-300 hover:bg-gray-700">
-                          <div className="w-24 h-24 relative flex-shrink-0">
+                      <div 
+                        key={podcast.id} 
+                        className="bg-gray-800 bg-opacity-50 backdrop-blur-lg rounded-lg p-6 hover:bg-opacity-70 transition-all duration-300 cursor-pointer"
+                      >
+                        <div className="flex flex-col md:flex-row gap-4">
+                          <div className="w-full md:w-48 h-48 relative flex-shrink-0">
                             <Image 
                               loader={imageLoader}
                               src={podcast.image} 
@@ -124,20 +140,49 @@ export default function SearchPageContent() {
                               objectFit="cover"
                               loading="lazy"
                               unoptimized
+                              className="rounded-lg"
                             />
                           </div>
-                          <div className="flex-1 p-4">
-                            <h3 className="text-xl font-semibold mb-1">{podcast.title}</h3>
-                            <p className="text-gray-300 mb-2 line-clamp-2">{podcast.description}</p>
-                            <div className="flex items-center text-sm text-gray-400">
-                              <span className="flex items-center mr-4">
-                                <Headphones className="h-4 w-4 mr-1" />
-                                {podcast.total_episodes} episodes
-                              </span>
+                          <div className="flex-1">
+                            <div className="flex items-center justify-between mb-4">
+                              <h3 className="text-xl font-semibold">{podcast.title}</h3>
+                              <Link href={`/podcast/${podcast.id}`}>
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm" 
+                                  className="text-purple-400 hover:text-purple-300 hover:bg-purple-900/50"
+                                >
+                                  View Episodes
+                                </Button>
+                              </Link>
+                            </div>
+                            <div 
+                              className={`text-gray-300 mb-4 prose prose-invert max-w-none ${
+                                expandedShows.has(podcast.id) ? '' : 'line-clamp-3'
+                              }`}
+                              dangerouslySetInnerHTML={{ __html: podcast.description }}
+                            />
+                            {podcast.description.length > 150 && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="text-purple-400 hover:text-purple-300 p-0 h-auto font-normal"
+                                onClick={() => toggleExpanded(podcast.id)}
+                              >
+                                {expandedShows.has(podcast.id) ? (
+                                  <>Read less <ChevronUp className="ml-1 h-4 w-4" /></>
+                                ) : (
+                                  <>Read more <ChevronDown className="ml-1 h-4 w-4" /></>
+                                )}
+                              </Button>
+                            )}
+                            <div className="flex items-center text-sm text-gray-400 mt-2">
+                              <Headphones className="h-4 w-4 mr-2" />
+                              <span className="mr-4">{podcast.total_episodes} episodes</span>
                             </div>
                           </div>
                         </div>
-                      </Link>
+                      </div>
                     ))}
                   </div>
                 </TabsContent>
