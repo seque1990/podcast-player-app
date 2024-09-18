@@ -1,33 +1,33 @@
-import { NextApiRequest, NextApiResponse } from 'next'
+import { NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
-import { authMiddleware } from '@/lib/authMiddleware'
+import { cookies } from 'next/headers'
 
-async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method === 'POST') {
-    const { podcastId } = req.body
-    const userId = req.user.id
+export async function POST(request: Request) {
+  const cookieStore = cookies()
+  const userId = cookieStore.get('userId')?.value
 
-    try {
-      const updatedUser = await prisma.user.update({
-        where: { id: userId },
-        data: {
-          podcasts: {
-            disconnect: { id: podcastId },
-          },
+  if (!userId) {
+    return NextResponse.json({ message: 'Unauthorized' }, { status: 401 })
+  }
+
+  const { podcastId } = await request.json()
+
+  try {
+    const updatedUser = await prisma.user.update({
+      where: { id: userId },
+      data: {
+        podcasts: {
+          disconnect: { id: podcastId },
         },
-        include: {
-          podcasts: true,
-        },
-      })
+      },
+      include: {
+        podcasts: true,
+      },
+    })
 
-      res.status(200).json({ message: 'Unsubscribed successfully', podcasts: updatedUser.podcasts })
-    } catch (error) {
-      res.status(400).json({ message: 'Error unsubscribing from podcast', error })
-    }
-  } else {
-    res.setHeader('Allow', ['POST'])
-    res.status(405).end(`Method ${req.method} Not Allowed`)
+    return NextResponse.json({ message: 'Unsubscribed successfully', podcasts: updatedUser.podcasts })
+  } catch (error) {
+    console.error('Error unsubscribing from podcast:', error)
+    return NextResponse.json({ message: 'Error unsubscribing from podcast', error }, { status: 400 })
   }
 }
-
-export default authMiddleware(handler)
