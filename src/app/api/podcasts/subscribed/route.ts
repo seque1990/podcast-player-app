@@ -1,31 +1,30 @@
-import { NextApiRequest, NextApiResponse } from 'next'
-import prisma from '@/lib/prisma'
-import { authMiddleware } from '@/lib/authMiddleware'
+import { NextResponse } from 'next/server';
+import prisma from '@/lib/prisma';
+import { cookies } from 'next/headers';
 
-async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method === 'GET') {
-    const userId = req.user.id
+export async function GET() {
+  const cookieStore = cookies();
+  const userId = cookieStore.get('userId')?.value;
 
-    try {
-      const user = await prisma.user.findUnique({
-        where: { id: userId },
-        include: {
-          podcasts: true,
-        },
-      })
+  if (!userId) {
+    return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
+  }
 
-      if (!user) {
-        return res.status(404).json({ message: 'User not found' })
-      }
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      include: {
+        podcasts: true,
+      },
+    });
 
-      res.status(200).json({ podcasts: user.podcasts })
-    } catch (error) {
-      res.status(400).json({ message: 'Error fetching subscribed podcasts', error })
+    if (!user) {
+      return NextResponse.json({ message: 'User not found' }, { status: 404 });
     }
-  } else {
-    res.setHeader('Allow', ['GET'])
-    res.status(405).end(`Method ${req.method} Not Allowed`)
+
+    return NextResponse.json({ podcasts: user.podcasts });
+  } catch (error) {
+    console.error('Error fetching subscribed podcasts:', error);
+    return NextResponse.json({ message: 'Error fetching subscribed podcasts' }, { status: 500 });
   }
 }
-
-export default authMiddleware(handler)

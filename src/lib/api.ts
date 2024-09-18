@@ -9,9 +9,17 @@ export async function getAllPodcasts(): Promise<ParsedFeed[]> {
 }
 
 export async function getUserSubscriptions(): Promise<ParsedFeed[]> {
-  const response = await fetch(`${API_BASE_URL}/podcasts/subscribed`);
-  if (!response.ok) throw new Error('Failed to fetch subscriptions');
-  return response.json();
+  const response = await fetch(`${API_BASE_URL}/podcasts/subscribed`, {
+    credentials: 'include',
+  });
+  if (!response.ok) {
+    if (response.status === 401) {
+      throw new Error('Unauthorized');
+    }
+    throw new Error('Failed to fetch subscriptions');
+  }
+  const data = await response.json();
+  return data.podcasts;
 }
 
 export async function subscribeToPodcast(podcastId: string): Promise<void> {

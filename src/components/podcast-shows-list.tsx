@@ -4,7 +4,6 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import PodcastLayout from './podcast-layout';
-import { getFallbackPodcasts } from '@/utils/fallbackPodcasts';
 import { ParsedFeed } from '@/utils/rssFeedParser';
 import { getAllPodcasts } from '@/lib/api'
 
