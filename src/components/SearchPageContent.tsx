@@ -12,6 +12,7 @@ import { debounce } from 'lodash'
 import PodcastLayout from '@/components/podcast-layout'
 import { getFallbackPodcasts } from '@/utils/fallbackPodcasts'
 import { ParsedFeed } from '@/utils/rssFeedParser'
+import { getAllPodcasts } from '@/lib/api'
 
 const INITIAL_BATCH_SIZE = 8;
 const LOAD_MORE_SIZE = 16;
@@ -39,7 +40,7 @@ export default function SearchPageContent() {
     async function loadInitialPodcasts() {
       setIsLoading(true)
       try {
-        const allPodcasts = await getFallbackPodcasts()
+        const allPodcasts = await getAllPodcasts()
         setPodcasts(allPodcasts)
         setDisplayedPodcasts(allPodcasts.slice(0, INITIAL_BATCH_SIZE))
         setHasMore(allPodcasts.length > INITIAL_BATCH_SIZE)

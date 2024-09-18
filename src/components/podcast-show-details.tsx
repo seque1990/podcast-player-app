@@ -1,9 +1,10 @@
 'use client';
 
-import React, { useState, useRef, lazy, Suspense } from 'react';
+import React, { useState, useRef, lazy, Suspense, useEffect } from 'react';
 import PodcastLayout from './podcast-layout';
 import { Button } from "@/components/ui/button"
 import { Headphones, Share2 } from 'lucide-react'
+import { getUserSubscriptions, subscribeToPodcast, unsubscribeFromPodcast } from '@/lib/api';
 
 const EpisodeList = lazy(() => import('./EpisodeList'));
 
@@ -35,6 +36,32 @@ export default function PodcastShowDetails({ initialShow }: { initialShow: Simpl
   const [duration, setDuration] = useState<number | null>(null);
   const [isSubscribed, setIsSubscribed] = useState(false);
   const audioRef = useRef<HTMLAudioElement>(null);
+
+  useEffect(() => {
+    // Check if the user is subscribed to this podcast
+    const checkSubscription = async () => {
+      try {
+        const subscriptions = await getUserSubscriptions();
+        setIsSubscribed(subscriptions.some(sub => sub.id === initialShow.id));
+      } catch (error) {
+        console.error('Error checking subscription:', error);
+      }
+    };
+    checkSubscription();
+  }, [initialShow.id]);
+
+  const handleSubscribe = async () => {
+    try {
+      if (isSubscribed) {
+        await unsubscribeFromPodcast(initialShow.id);
+      } else {
+        await subscribeToPodcast(initialShow.id);
+      }
+      setIsSubscribed(!isSubscribed);
+    } catch (error) {
+      console.error('Error updating subscription:', error);
+    }
+  };
 
   const togglePlayPause = () => {
     if (audioRef.current) {
@@ -111,7 +138,7 @@ export default function PodcastShowDetails({ initialShow }: { initialShow: Simpl
             </div>
             <Button 
               className={`${isSubscribed ? 'bg-purple-700' : 'bg-purple-600'} hover:bg-purple-700 text-white`}
-              onClick={() => setIsSubscribed(!isSubscribed)}
+              onClick={handleSubscribe}
             >
               {isSubscribed ? 'Subscribed' : 'Subscribe'}
             </Button>

@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Search, PlayCircle, PlusCircle, Bookmark, History, Clock, Calendar } from 'lucide-react'
 import PodcastLayout from '@/components/podcast-layout'
 import Image from 'next/image'
-import { getFallbackPodcasts } from '@/utils/fallbackPodcasts'
+import { getAllPodcasts, getUserSubscriptions } from '@/lib/api'
 import { ParsedFeed } from '@/utils/rssFeedParser'
 import Link from 'next/link'
 
@@ -32,27 +32,27 @@ export default function YourLibraryPage() {
   const [recentlyPlayed, setRecentlyPlayed] = useState<RecentlyPlayedEpisode[]>([])
 
   useEffect(() => {
-    const loadPodcasts = async () => {
-      const podcasts = await getFallbackPodcasts()
-      setAllPodcasts(podcasts)
-    }
+    const loadLibraryData = async () => {
+      try {
+        const [podcasts, subscriptions] = await Promise.all([
+          getAllPodcasts(),
+          getUserSubscriptions()
+        ]);
+        setAllPodcasts(podcasts);
+        setUserSubscriptions(subscriptions.map(sub => ({
+          podcastId: sub.id,
+          lastListened: 'Recently' // You might want to add this information to your API
+        })));
+      } catch (error) {
+        console.error('Error loading library data:', error);
+      }
+    };
 
-    loadPodcasts()
+    loadLibraryData();
 
-    // Mock user subscriptions - replace with actual data fetching
-    setUserSubscriptions([
-      { podcastId: "1", lastListened: "2 days ago" },
-      { podcastId: "2", lastListened: "1 week ago" },
-      { podcastId: "3", lastListened: "3 days ago" },
-    ])
-
-    // Mock recently played - replace with actual data fetching
-    setRecentlyPlayed([
-      { id: "1", title: "The Future of AI", podcastId: "1", podcastTitle: "Tech Talk Daily", duration: "45:30", image: "/placeholder.svg?height=60&width=60&text=AI" },
-      { id: "2", title: "Startup Funding Strategies", podcastId: "2", podcastTitle: "Business Insights", duration: "38:15", image: "/placeholder.svg?height=60&width=60&text=Funding" },
-      { id: "3", title: "Black Holes Explained", podcastId: "3", podcastTitle: "Science Today", duration: "52:00", image: "/placeholder.svg?height=60&width=60&text=Space" },
-    ])
-  }, [])
+    // TODO: Implement recently played functionality
+    // This might require creating a new API endpoint and updating the database schema
+  }, []);
 
   const subscribedPodcasts = allPodcasts.filter(podcast => 
     userSubscriptions.some(sub => sub.podcastId === podcast.id)

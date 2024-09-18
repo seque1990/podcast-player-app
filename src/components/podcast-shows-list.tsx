@@ -6,6 +6,8 @@ import Image from 'next/image';
 import PodcastLayout from './podcast-layout';
 import { getFallbackPodcasts } from '@/utils/fallbackPodcasts';
 import { ParsedFeed } from '@/utils/rssFeedParser';
+import { getAllPodcasts } from '@/lib/api'
+
 
 type PodcastShow = ParsedFeed;
 
@@ -29,7 +31,7 @@ export default function PodcastShowsList({ initialPodcasts }: { initialPodcasts:
   const loadRemainingPodcasts = async () => {
     setIsLoading(true);
     try {
-      const allPodcasts = await getFallbackPodcasts();
+      const allPodcasts = await getAllPodcasts();
       setPodcastShows(allPodcasts);
     } catch (error) {
       console.error('Error loading remaining podcasts:', error);
