@@ -1,28 +1,22 @@
-import { NextApiRequest, NextApiResponse } from 'next'
+import { NextResponse } from 'next/server'
 import bcrypt from 'bcryptjs'
 import prisma from '@/lib/prisma'
 
+export async function POST(request: Request) {
+  const { name, email, password } = await request.json()
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method === 'POST') {
-    const { name, email, password } = req.body
+  try {
+    const hashedPassword = await bcrypt.hash(password, 10)
+    const user = await prisma.user.create({
+      data: {
+        name,
+        email,
+        password: hashedPassword,
+      },
+    })
 
-    try {
-      const hashedPassword = await bcrypt.hash(password, 10)
-      const user = await prisma.user.create({
-        data: {
-          name,
-          email,
-          password: hashedPassword,
-        },
-      })
-
-      res.status(201).json({ message: 'User created successfully', userId: user.id })
-    } catch (error) {
-      res.status(400).json({ message: 'Error creating user', error })
-    }
-  } else {
-    res.setHeader('Allow', ['POST'])
-    res.status(405).end(`Method ${req.method} Not Allowed`)
+    return NextResponse.json({ message: 'User created successfully', userId: user.id }, { status: 201 })
+  } catch (error) {
+    return NextResponse.json({ message: 'Error creating user', error }, { status: 400 })
   }
 }
