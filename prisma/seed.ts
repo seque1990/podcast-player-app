@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client'
+import { PrismaClient, Podcast, User } from '@prisma/client'
 import { parsePodcastFeed } from '../src/utils/rssFeedParser'
 
 const prisma = new PrismaClient()
@@ -52,8 +52,8 @@ async function main() {
   console.log('Podcasts created')
 
   // Add some subscriptions
-  const allUsers = await prisma.user.findMany()
-  const allPodcasts = await prisma.podcast.findMany()
+  const allUsers: User[] = await prisma.user.findMany()
+  const allPodcasts: Podcast[] = await prisma.podcast.findMany()
 
   for (const user of allUsers) {
     const randomPodcasts = allPodcasts
@@ -64,7 +64,7 @@ async function main() {
       where: { id: user.id },
       data: {
         podcasts: {
-          connect: randomPodcasts.map(podcast => ({ id: podcast.id })),
+          connect: randomPodcasts.map((podcast: Podcast) => ({ id: podcast.id })),
         },
       },
     })
