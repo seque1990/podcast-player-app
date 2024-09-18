@@ -1,33 +1,76 @@
 'use client';
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Search, PlayCircle, PlusCircle, Bookmark, History, Clock, Calendar } from 'lucide-react'
 import PodcastLayout from '@/components/podcast-layout'
 import Image from 'next/image'
+import { getFallbackPodcasts } from '@/utils/fallbackPodcasts'
+import { ParsedFeed } from '@/utils/rssFeedParser'
+import Link from 'next/link'
 
-// Mock data for subscribed podcasts
-const subscribedPodcasts = [
-  { id: 1, title: "Tech Talk Daily", lastEpisode: "The Future of AI", lastListened: "2 days ago", image: "/placeholder.svg?height=80&width=80&text=Tech+Talk" },
-  { id: 2, title: "Business Insights", lastEpisode: "Startup Funding Strategies", lastListened: "1 week ago", image: "/placeholder.svg?height=80&width=80&text=Business" },
-  { id: 3, title: "Science Today", lastEpisode: "Black Holes Explained", lastListened: "3 days ago", image: "/placeholder.svg?height=80&width=80&text=Science" },
-  { id: 4, title: "History Uncovered", lastEpisode: "The Renaissance Era", lastListened: "1 day ago", image: "/placeholder.svg?height=80&width=80&text=History" },
-]
+// You might want to create a separate file for these types
+type UserSubscription = {
+  podcastId: string;
+  lastListened: string;
+}
 
-// Mock data for recently played episodes
-const recentlyPlayed = [
-  { id: 1, title: "The Impact of 5G", podcast: "Tech Talk Daily", duration: "45:30", image: "/placeholder.svg?height=60&width=60&text=5G" },
-  { id: 2, title: "Effective Leadership", podcast: "Business Insights", duration: "38:15", image: "/placeholder.svg?height=60&width=60&text=Leadership" },
-  { id: 3, title: "Climate Change Update", podcast: "Science Today", duration: "52:00", image: "/placeholder.svg?height=60&width=60&text=Climate" },
-]
+type RecentlyPlayedEpisode = {
+  id: string;
+  title: string;
+  podcastId: string;
+  podcastTitle: string;
+  duration: string;
+  image: string;
+}
 
 export default function YourLibraryPage() {
   const [searchTerm, setSearchTerm] = useState("")
+  const [allPodcasts, setAllPodcasts] = useState<ParsedFeed[]>([])
+  const [userSubscriptions, setUserSubscriptions] = useState<UserSubscription[]>([])
+  const [recentlyPlayed, setRecentlyPlayed] = useState<RecentlyPlayedEpisode[]>([])
+
+  useEffect(() => {
+    const loadPodcasts = async () => {
+      const podcasts = await getFallbackPodcasts()
+      setAllPodcasts(podcasts)
+    }
+
+    loadPodcasts()
+
+    // Mock user subscriptions - replace with actual data fetching
+    setUserSubscriptions([
+      { podcastId: "1", lastListened: "2 days ago" },
+      { podcastId: "2", lastListened: "1 week ago" },
+      { podcastId: "3", lastListened: "3 days ago" },
+    ])
+
+    // Mock recently played - replace with actual data fetching
+    setRecentlyPlayed([
+      { id: "1", title: "The Future of AI", podcastId: "1", podcastTitle: "Tech Talk Daily", duration: "45:30", image: "/placeholder.svg?height=60&width=60&text=AI" },
+      { id: "2", title: "Startup Funding Strategies", podcastId: "2", podcastTitle: "Business Insights", duration: "38:15", image: "/placeholder.svg?height=60&width=60&text=Funding" },
+      { id: "3", title: "Black Holes Explained", podcastId: "3", podcastTitle: "Science Today", duration: "52:00", image: "/placeholder.svg?height=60&width=60&text=Space" },
+    ])
+  }, [])
+
+  const subscribedPodcasts = allPodcasts.filter(podcast => 
+    userSubscriptions.some(sub => sub.podcastId === podcast.id)
+  )
 
   const filteredPodcasts = subscribedPodcasts.filter(podcast =>
     podcast.title.toLowerCase().includes(searchTerm.toLowerCase())
   )
+
+  const handleSubscribe = (podcastId: string) => {
+    // Implement subscription logic here
+    console.log(`Subscribing to podcast ${podcastId}`)
+  }
+
+  const handlePlay = (episodeId: string) => {
+    // Implement play logic here
+    console.log(`Playing episode ${episodeId}`)
+  }
 
   return (
     <PodcastLayout
@@ -61,21 +104,26 @@ export default function YourLibraryPage() {
                   />
                 </div>
                 <div className="space-y-4">
-                  {filteredPodcasts.map((podcast) => (
-                    <div key={podcast.id} className="flex items-center space-x-4 bg-gray-700 p-4 rounded-lg">
-                      <Image src={podcast.image} alt={podcast.title} width={80} height={80} className="rounded-md object-cover" />
-                      <div className="flex-1">
-                        <h3 className="text-lg font-semibold">{podcast.title}</h3>
-                        <p className="text-sm text-gray-300">Last episode: {podcast.lastEpisode}</p>
-                        <p className="text-xs text-gray-400">Last listened: {podcast.lastListened}</p>
+                  {filteredPodcasts.map((podcast) => {
+                    const subscription = userSubscriptions.find(sub => sub.podcastId === podcast.id)
+                    return (
+                      <div key={podcast.id} className="flex items-center space-x-4 bg-gray-700 p-4 rounded-lg">
+                        <Image src={podcast.image} alt={podcast.title} width={80} height={80} className="rounded-md object-cover" />
+                        <div className="flex-1">
+                          <h3 className="text-lg font-semibold">{podcast.title}</h3>
+                          <p className="text-sm text-gray-300">Last episode: {podcast.episodes[0]?.title || 'N/A'}</p>
+                          <p className="text-xs text-gray-400">Last listened: {subscription?.lastListened || 'N/A'}</p>
+                        </div>
+                        <Link href={`/podcast/${podcast.id}`}>
+                          <Button variant="ghost" size="icon">
+                            <PlayCircle className="h-6 w-6" />
+                          </Button>
+                        </Link>
                       </div>
-                      <Button variant="ghost" size="icon">
-                        <PlayCircle className="h-6 w-6" />
-                      </Button>
-                    </div>
-                  ))}
+                    )
+                  })}
                 </div>
-                <Button className="w-full mt-4 bg-purple-600 hover:bg-purple-700">
+                <Button className="w-full mt-4 bg-purple-600 hover:bg-purple-700" onClick={() => handleSubscribe('')}>
                   <PlusCircle className="h-5 w-5 mr-2" /> Add New Podcast
                 </Button>
               </div>
@@ -92,9 +140,12 @@ export default function YourLibraryPage() {
                       <Image src={episode.image} alt={episode.title} width={48} height={48} className="rounded-md object-cover" />
                       <div className="flex-1">
                         <h4 className="font-medium">{episode.title}</h4>
-                        <p className="text-sm text-gray-400">{episode.podcast}</p>
+                        <p className="text-sm text-gray-400">{episode.podcastTitle}</p>
                       </div>
                       <span className="text-sm text-gray-400">{episode.duration}</span>
+                      <Button variant="ghost" size="icon" onClick={() => handlePlay(episode.id)}>
+                        <PlayCircle className="h-5 w-5" />
+                      </Button>
                     </div>
                   ))}
                 </div>
