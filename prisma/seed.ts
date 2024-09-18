@@ -3,6 +3,15 @@ import { parsePodcastFeed } from '../src/utils/rssFeedParser'
 
 const prisma = new PrismaClient()
 
+// Define an interface for the podcast object
+interface PodcastData {
+  id: string;
+  title: string;
+  description?: string;
+  imageUrl?: string;
+  feedUrl: string;
+}
+
 const rssFeedUrls = [
   "https://allinchamathjason.libsyn.com/rss",
   "https://feeds.megaphone.fm/hubermanlab",
@@ -64,7 +73,7 @@ async function main() {
       where: { id: user.id },
       data: {
         podcasts: {
-          connect: randomPodcasts.map((podcast) => ({ id: podcast.id })),
+          connect: randomPodcasts.map((podcast: PodcastData) => ({ id: podcast.id })),
         },
       },
     })
